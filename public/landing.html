@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShiftWell — Built for Shift Workers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #090c14;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: rgba(255,255,255,0.1);
+      --amber: #fbbf24;
+      --amber-glow: rgba(251,191,36,0.15);
+      --teal: #2dd4bf;
+      --teal-dim: rgba(45,212,191,0.15);
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --soft: #d1d5db;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: #090c14 !important;
+      color: #f3f4f6;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(45,212,191,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 90%, rgba(245,158,11,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 30% at 10% 60%, rgba(99,102,241,0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle var(--d, 3s) ease-in-out infinite var(--delay, 0s);
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: var(--min-op, 0.1); }
+      50% { opacity: var(--max-op, 0.6); }
+    }
+
+    .container { max-width: 680px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    nav { position: relative; z-index: 10; padding: 28px 0 0; }
+    nav .container { display: flex; align-items: center; justify-content: space-between; }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 10px var(--teal);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 6px var(--teal); }
+      50% { box-shadow: 0 0 16px var(--teal), 0 0 30px rgba(45,212,191,0.4); }
+    }
+    .badge {
+      font-size: 11px; font-weight: 500; padding: 4px 10px;
+      border-radius: 20px; background: var(--teal-dim);
+      border: 1px solid rgba(45,212,191,0.2); color: var(--teal); letter-spacing: 0.5px;
+    }
+
+    .hero { padding: 80px 0 60px; text-align: center; animation: fadeUp 0.8s ease both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .shift-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 30px;
+      background: var(--amber-glow); border: 1px solid rgba(245,158,11,0.25);
+      font-size: 12px; font-weight: 500; color: var(--amber);
+      margin-bottom: 32px; letter-spacing: 0.3px;
+    }
+    .shift-pill span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--amber); animation: pulse-amber 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse-amber {
+      0%, 100% { box-shadow: 0 0 4px var(--amber); }
+      50% { box-shadow: 0 0 12px var(--amber); }
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(36px, 8vw, 56px);
+      font-weight: 800; line-height: 1.08;
+      letter-spacing: -1.5px; margin-bottom: 24px; color: #ffffff;
+    }
+    h1 em { font-style: normal; color: var(--teal); }
+    h1 strong { color: var(--amber); }
+
+    .hero-sub {
+      font-size: 18px; font-weight: 300; color: var(--soft);
+      max-width: 520px; margin: 0 auto 48px; line-height: 1.7;
+    }
+    .hero-sub b { color: var(--text); font-weight: 500; }
+
+    .form-wrap { animation: fadeUp 0.8s ease 0.15s both; }
+    .form-row { display: flex; gap: 10px; max-width: 480px; margin: 0 auto 12px; }
+    input[type="email"] {
+      flex: 1; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 18px; font-family: 'DM Sans', sans-serif;
+      font-size: 15px; color: var(--text); outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="email"]::placeholder { color: var(--muted); }
+    input[type="email"]:focus {
+      border-color: rgba(45,212,191,0.4);
+      box-shadow: 0 0 0 3px rgba(45,212,191,0.08);
+    }
+    .cta-btn {
+      background: var(--teal); color: #090c14; border: none;
+      border-radius: 12px; padding: 14px 24px;
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 14px; letter-spacing: 0.3px; cursor: pointer;
+      white-space: nowrap; transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .cta-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(45,212,191,0.3); }
+    .cta-btn:active { transform: translateY(0); }
+    .cta-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .form-note { font-size: 12px; color: var(--muted); text-align: center; }
+    .success-msg {
+      display: none; text-align: center; padding: 16px 24px;
+      background: rgba(45,212,191,0.08); border: 1px solid rgba(45,212,191,0.2);
+      border-radius: 12px; color: var(--teal); font-weight: 500;
+      max-width: 480px; margin: 0 auto; font-size: 15px;
+    }
+
+    .proof {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-top: 28px; font-size: 13px; color: var(--muted);
+      animation: fadeUp 0.8s ease 0.25s both;
+    }
+    .proof-avatars { display: flex; }
+    .proof-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--bg); margin-left: -8px;
+      font-size: 11px; display: flex; align-items: center;
+      justify-content: center; font-weight: 600;
+    }
+    .proof-avatar:first-child { margin-left: 0; }
+    .av1 { background: #7c3aed; }
+    .av2 { background: #0891b2; }
+    .av3 { background: #b45309; }
+    .av4 { background: #065f46; }
+
+    .section-divider {
+      display: flex; align-items: center; gap: 16px;
+      margin: 64px 0 56px; animation: fadeUp 0.8s ease 0.3s both;
+    }
+    .section-divider::before, .section-divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+    }
+    .section-divider span {
+      font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted); font-weight: 500;
+    }
+
+    .problem {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; margin-bottom: 48px;
+      animation: fadeUp 0.8s ease 0.35s both;
+    }
+    .problem-label {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--amber); font-weight: 600; margin-bottom: 16px;
+    }
+    .problem p { font-size: 17px; color: var(--soft); line-height: 1.75; font-weight: 300; }
+    .problem p b { color: var(--text); font-weight: 500; }
+
+    .features {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-bottom: 64px; animation: fadeUp 0.8s ease 0.4s both;
+    }
+    @media (max-width: 480px) { .features { grid-template-columns: 1fr; } }
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feature-card:hover { border-color: rgba(45,212,191,0.2); transform: translateY(-2px); }
+    .feature-icon { font-size: 24px; margin-bottom: 12px; display: block; }
+    .feature-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 6px; color: var(--text); }
+    .feature-desc { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+    .demo-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; overflow: hidden; margin-bottom: 64px;
+      animation: fadeUp 0.8s ease 0.45s both;
+    }
+    .demo-header {
+      background: var(--surface2); padding: 14px 20px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .demo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 8px var(--teal); animation: pulse 2s ease-in-out infinite; }
+    .demo-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: var(--soft); }
+    .demo-shift-badge {
+      margin-left: auto; font-size: 11px; padding: 3px 10px;
+      border-radius: 20px; background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.2); color: var(--amber); font-weight: 500;
+    }
+    .demo-body { padding: 24px; }
+    .briefing-line {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .briefing-line:last-child { border-bottom: none; padding-bottom: 0; }
+    .briefing-line:first-child { padding-top: 0; }
+    .briefing-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .briefing-text { font-size: 14px; color: var(--soft); line-height: 1.6; }
+    .briefing-text strong { color: var(--text); font-weight: 500; }
+    .briefing-text .highlight { color: var(--teal); font-weight: 500; }
+    .briefing-text .warn { color: var(--amber); font-weight: 500; }
+
+    .builder-note {
+      background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(45,212,191,0.06));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 28px; text-align: center;
+      margin-bottom: 64px; animation: fadeUp 0.8s ease 0.5s both;
+    }
+    .builder-note p { font-size: 15px; color: var(--soft); font-style: italic; font-weight: 300; line-height: 1.75; }
+    .builder-note p b { color: var(--text); font-weight: 500; font-style: normal; }
+    .builder-sig { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+    .footer-cta { text-align: center; padding: 64px 0 80px; animation: fadeUp 0.8s ease 0.55s both; }
+    .footer-cta h2 {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: clamp(26px, 6vw, 38px); letter-spacing: -1px; margin-bottom: 16px;
+    }
+    .footer-cta p { font-size: 16px; color: var(--muted); margin-bottom: 36px; }
+
+    footer { border-top: 1px solid var(--border); padding: 28px 0; text-align: center; position: relative; z-index: 1; }
+    footer p { font-size: 12px; color: var(--muted); }
+
+    #waitlist-count { font-weight: 500; color: var(--soft); }
+
+    @media (max-width: 520px) {
+      .form-row { flex-direction: column; }
+      .cta-btn { width: 100%; }
+      .hero { padding: 60px 0 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<nav>
+  <div class="container">
+    <div class="logo"><div class="logo-dot"></div>ShiftWell</div>
+    <div class="badge">Coming Soon</div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <div class="shift-pill"><span></span>Built for shift workers, by a shift worker</div>
+    <h1>Your life doesn't run<br/>on a <strong>9-to-5.</strong><br/>Your app <em>shouldn't</em> either.</h1>
+    <p class="hero-sub">
+      ShiftWell is the first wellness app that wraps <b>sleep guidance, hydration, and daily coaching</b> around your actual shift pattern — not some imaginary routine.
+    </p>
+    <div class="form-wrap">
+      <div class="form-row" id="form-row">
+        <input type="email" id="email-input" placeholder="your@email.com" autocomplete="email" />
+        <button class="cta-btn" id="submit-btn" onclick="handleSubmit()">Join the Waitlist</button>
+      </div>
+      <div class="success-msg" id="success-msg">✓ You're on the list — we'll be in touch before launch.</div>
+      <p class="form-note">Free 14-day trial at launch. No spam, ever.</p>
+    </div>
+    <div class="proof">
+      <div class="proof-avatars">
+        <div class="proof-avatar av1">N</div>
+        <div class="proof-avatar av2">J</div>
+        <div class="proof-avatar av3">S</div>
+        <div class="proof-avatar av4">R</div>
+      </div>
+      <span id="waitlist-count">Be one of the first shift workers to try it</span>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="section-divider"><span>The Problem</span></div>
+  <div class="problem">
+    <div class="problem-label">Sound familiar?</div>
+    <p>
+      Every health app tells you to <b>sleep by 10pm, eat breakfast at 8am, and go for a morning jog.</b>
+      But you finished a night shift at 7am. You're eating lunch at midnight.
+      Your body clock is running three hours behind and nobody — not MyFitnessPal, not Headspace, not the NHS website — has any idea.
+      <br/><br/><b>ShiftWell does.</b>
+    </p>
+  </div>
+
+  <div class="section-divider"><span>What You Get</span></div>
+  <div class="features">
+    <div class="feature-card">
+      <span class="feature-icon">🌙</span>
+      <div class="feature-title">Shift-Aware Sleep</div>
+      <div class="feature-desc">Exact sleep windows based on your upcoming rotation — not generic bedtime advice.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">💧</span>
+      <div class="feature-title">Hydration Timing</div>
+      <div class="feature-desc">Reminders timed to your shift phase. Night workers dehydrate differently — we track that.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">☀️</span>
+      <div class="feature-title">Daily Briefing</div>
+      <div class="feature-desc">A personalised daily check-in that knows exactly where you are in your cycle — every single day.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">💬</span>
+      <div class="feature-title">Your Wellbeing Companion</div>
+      <div class="feature-desc">A chat companion that understands the mental load of shift work. There when you need it.</div>
+    </div>
+  </div>
+
+  <div class="section-divider"><span>A Taste of ShiftWell</span></div>
+  <div class="demo-card">
+    <div class="demo-header">
+      <div class="demo-dot"></div>
+      <div class="demo-title">Today's Briefing</div>
+      <div class="demo-shift-badge">Night 3 of 4</div>
+    </div>
+    <div class="demo-body">
+      <div class="briefing-line">
+        <span class="briefing-icon">🌙</span>
+        <div class="briefing-text">
+          <strong>Sleep window:</strong> You finish at 07:00 — aim to be in bed by <span class="highlight">08:30</span> and sleep through to <span class="highlight">15:30</span>. Blackout blinds on, phone on silent. You've got a transition to days in 48 hours so keeping this window matters.
+        </div>
+      </div>
+      <div class="briefing-line">
+        <span class="briefing-icon">💧</span>
+        <div class="briefing-text">
+          <strong>Hydration:</strong> You're 6 hours into nights — your kidneys are in a different phase right now. <span class="warn">Avoid caffeine</span> for the next 3 hours before sleep. Drink 500ml of water before you leave the building.
+        </div>
+      </div>
+      <div class="briefing-line">
+        <span class="briefing-icon">⚡</span>
+        <div class="briefing-text">
+          <strong>Today's focus:</strong> Night 3 is when fatigue peaks. <span class="highlight">One thing only</span> — sleep well today. Everything else can wait until tomorrow.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="builder-note">
+    <p><b>"I'm a mechanical engineer on a 4-week rotating shift pattern.</b> I've spent years trying to use apps that have no idea what my life looks like. So I built ShiftWell — the app I always wished existed."</p>
+    <div class="builder-sig">— Jonny, Founder &amp; fellow shift worker 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+  </div>
+
+  <div class="footer-cta">
+    <h2>Ready to finally feel like<br/>the app gets you?</h2>
+    <p>Join the waitlist — free 14-day trial at launch, no card required.</p>
+    <div class="form-wrap">
+      <div class="form-row" id="form-row-2">
+        <input type="email" id="email-input-2" placeholder="your@email.com" autocomplete="email" />
+        <button class="cta-btn" id="submit-btn-2" onclick="handleSubmit2()">Join the Waitlist</button>
+      </div>
+      <div class="success-msg" id="success-msg-2">✓ You're on the list — we'll be in touch before launch.</div>
+      <p class="form-note" style="margin-top:10px;">No spam. Unsubscribe anytime.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <p>© 2025 ShiftWell. Made in Glasgow 🏴󠁧󠁢󠁳󠁣󠁴󠁿 — for every nurse, engineer, officer and worker keeping the world running overnight.</p>
+  </div>
+</footer>
+
+<script>
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 0.5;
+    s.style.cssText = `
+      left: ${Math.random() * 100}%;
+      top: ${Math.random() * 100}%;
+      width: ${size}px;
+      height: ${size}px;
+      --d: ${2 + Math.random() * 4}s;
+      --delay: ${Math.random() * 4}s;
+      --min-op: ${0.05 + Math.random() * 0.1};
+      --max-op: ${0.3 + Math.random() * 0.5};
+    `;
+    starsEl.appendChild(s);
+  }
+
+  let count = 0;
+
+  function updateCountDisplay() {
+    const el = document.getElementById('waitlist-count');
+    if (count > 0) {
+      el.textContent = `${count} shift worker${count === 1 ? '' : 's'} already on the waitlist`;
+    }
+  }
+
+  function showSuccess(formNum) {
+    document.getElementById(formNum === 1 ? 'form-row' : 'form-row-2').style.display = 'none';
+    document.getElementById(formNum === 1 ? 'success-msg' : 'success-msg-2').style.display = 'block';
+  }
+
+  async function submitEmail(email, btnId, formNum) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = true;
+    btn.textContent = 'Joining...';
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      if (!res.ok) throw new Error('Failed');
+      count++;
+      updateCountDisplay();
+      showSuccess(formNum);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Try again';
+    }
+  }
+
+  function handleSubmit() {
+    const email = document.getElementById('email-input').value.trim();
+    if (!email || !email.includes('@')) { document.getElementById('email-input').focus(); return; }
+    submitEmail(email, 'submit-btn', 1);
+  }
+  function handleSubmit2() {
+    const email = document.getElementById('email-input-2').value.trim();
+    if (!email || !email.includes('@')) { document.getElementById('email-input-2').focus(); return; }
+    submitEmail(email, 'submit-btn-2', 2);
+  }
+
+  document.getElementById('email-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSubmit(); });
+  document.getElementById('email-input-2').addEventListener('keydown', e => { if (e.key === 'Enter') handleSubmit2(); });
+</script>
+</body>
+</html>
