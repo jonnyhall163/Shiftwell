@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
+import { getTodayShift, formatShiftTime } from '../lib/shiftEngine'
 import type { User } from '@supabase/supabase-js'
+import type { PatternData, TodayShift } from '../lib/shiftEngine'
 
 const tabs = [
   { id: 'today',    label: 'Today',    icon: '☀️' },
@@ -14,18 +16,29 @@ const tabs = [
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('today')
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<any>(null)
   const router = useRouter()
 
   useEffect(() => {
-    const getUser = async () => {
+    const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-      } else {
-        setUser(user)
+      if (!user) { router.push('/login'); return }
+      setUser(user)
+
+      const { data: profile } = await supabase
+        .from('shiftwell_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile?.onboarding_complete) {
+        router.push('/onboarding')
+        return
       }
+
+      setProfile(profile)
     }
-    getUser()
+    init()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) router.push('/login')
@@ -39,7 +52,7 @@ export default function Dashboard() {
     router.push('/login')
   }
 
-  if (!user) {
+  if (!user || !profile) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-gray-400 text-sm">Loading...</div>
@@ -59,11 +72,11 @@ export default function Dashboard() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
-        {activeTab === 'today'    && <TodayView user={user} />}
+        {activeTab === 'today'    && <TodayView user={user} profile={profile} />}
         {activeTab === 'sleep'    && <SleepView />}
         {activeTab === 'food'     && <FoodView />}
         {activeTab === 'routines' && <RoutinesView />}
-        {activeTab === 'settings' && <SettingsView user={user} onSignOut={handleSignOut} />}
+        {activeTab === 'settings' && <SettingsView user={user} profile={profile} onSignOut={handleSignOut} />}
       </main>
 
       {/* Bottom nav */}
@@ -73,9 +86,7 @@ export default function Dashboard() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 flex flex-col items-center py-3 gap-0.5 text-xs font-medium transition-colors ${
-              activeTab === tab.id
-                ? 'text-teal-400'
-                : 'text-gray-600 hover:text-gray-400'
+              activeTab === tab.id ? 'text-teal-400' : 'text-gray-600 hover:text-gray-400'
             }`}
           >
             <span className="text-xl leading-none">{tab.icon}</span>
@@ -88,7 +99,11 @@ export default function Dashboard() {
 }
 
 // ── TODAY ────────────────────────────────────────────────
-function TodayView({ user }: { user: User }) {
+function TodayView({ user, profile }: { user: User, profile: any }) {
+  const [briefing, setBriefing] = useState<string>('')
+  const [loadingBriefing, setLoadingBriefing] = useState(true)
+  const [todayShift, setTodayShift] = useState<TodayShift | null>(null)
+
   const hour = new Date().getHours()
   const greeting =
     hour >= 5 && hour < 12 ? 'Good morning' :
@@ -97,11 +112,43 @@ function TodayView({ user }: { user: User }) {
 
   const name = user?.user_metadata?.full_name?.split(' ')[0] || 'there'
 
+  useEffect(() => {
+    if (profile?.pattern_data) {
+      const shift = getTodayShift(profile.pattern_data as PatternData)
+      setTodayShift(shift)
+    }
+
+    const fetchBriefing = async () => {
+      try {
+        const res = await fetch('/api/briefing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id }),
+        })
+        const data = await res.json()
+        setBriefing(data.briefing || '')
+      } catch {
+        setBriefing('Unable to load briefing right now. Check back shortly.')
+      } finally {
+        setLoadingBriefing(false)
+      }
+    }
+
+    fetchBriefing()
+  }, [])
+
   return (
     <div className="space-y-5 max-w-lg mx-auto">
       <div>
         <h2 className="text-2xl font-bold text-white">{greeting}, {name} 👋</h2>
-        <p className="text-gray-500 text-sm mt-1">Here's your shift wellness briefing</p>
+        <p className="text-gray-500 text-sm mt-1">
+          {todayShift
+            ? todayShift.isOff
+              ? 'Rest day — make it count'
+              : `${todayShift.label} shift · ${formatShiftTime(todayShift.startTime, todayShift.endTime)}`
+            : "Here's your shift wellness briefing"
+          }
+        </p>
       </div>
 
       {/* AI Briefing card */}
@@ -110,10 +157,15 @@ function TodayView({ user }: { user: User }) {
           <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-xs">✦</div>
           <span className="text-teal-300 font-semibold text-sm">ShiftWell AI</span>
         </div>
-        <p className="text-gray-300 text-sm leading-relaxed">
-          Set up your shift pattern in Settings and I'll give you a personalised daily briefing —
-          sleep windows, energy forecasts, and meal timing built around your actual shifts.
-        </p>
+        {loadingBriefing ? (
+          <div className="space-y-2">
+            <div className="h-3 bg-teal-900/60 rounded animate-pulse w-full" />
+            <div className="h-3 bg-teal-900/60 rounded animate-pulse w-5/6" />
+            <div className="h-3 bg-teal-900/60 rounded animate-pulse w-4/6" />
+          </div>
+        ) : (
+          <p className="text-gray-300 text-sm leading-relaxed">{briefing}</p>
+        )}
       </div>
 
       {/* Quick stats grid */}
@@ -122,7 +174,11 @@ function TodayView({ user }: { user: User }) {
           { label: 'Sleep logged',  value: '—',       icon: '🌙' },
           { label: 'Hydration',     value: '0 / 8',   icon: '💧' },
           { label: 'Next meal',     value: 'Not set', icon: '🍽️' },
-          { label: 'Next shift',    value: 'Not set', icon: '🔄' },
+          {
+            label: 'Today',
+            value: todayShift?.label || 'Not set',
+            icon: '🔄'
+          },
         ].map(card => (
           <div key={card.label} className="bg-gray-900 rounded-xl p-4">
             <div className="text-2xl mb-2">{card.icon}</div>
@@ -132,13 +188,20 @@ function TodayView({ user }: { user: User }) {
         ))}
       </div>
 
-      {/* Setup prompt */}
-      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-        <p className="text-white font-semibold text-sm mb-1">👆 Get started</p>
-        <p className="text-gray-400 text-sm">
-          Head to Settings → Shift pattern to unlock your personalised view.
-        </p>
-      </div>
+      {/* Rotation position */}
+      {todayShift?.dayInCycle && (
+        <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+          <p className="text-white font-semibold text-sm mb-1">
+            📅 Day {todayShift.dayInCycle} of your rotation
+          </p>
+          <p className="text-gray-400 text-sm">
+            {todayShift.isOff
+              ? 'Rest day. Recovery is part of the job.'
+              : `${todayShift.label} shift today — ${formatShiftTime(todayShift.startTime, todayShift.endTime)}`
+            }
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -156,7 +219,7 @@ function SleepView() {
           Log any sleep window, any time.
         </p>
         <div className="mt-4 inline-block bg-teal-900/40 text-teal-300 text-xs px-3 py-1 rounded-full">
-          Coming in Sprint 2
+          Coming in Sprint 3
         </div>
       </div>
     </div>
@@ -173,10 +236,10 @@ function FoodView() {
         <h3 className="text-white font-semibold mb-2">Meal planner</h3>
         <p className="text-gray-400 text-sm leading-relaxed">
           No breakfast, lunch, or dinner here. Just Meal 1, 2, 3 —
-          whenever your shift says it's time to eat.
+          whenever your shift says it is time to eat.
         </p>
         <div className="mt-4 inline-block bg-teal-900/40 text-teal-300 text-xs px-3 py-1 rounded-full">
-          Coming in Sprint 2
+          Coming in Sprint 3
         </div>
       </div>
     </div>
@@ -196,7 +259,7 @@ function RoutinesView() {
           that work before or after any shift.
         </p>
         <div className="mt-4 inline-block bg-teal-900/40 text-teal-300 text-xs px-3 py-1 rounded-full">
-          Coming in Sprint 2
+          Coming in Sprint 3
         </div>
       </div>
     </div>
@@ -204,7 +267,9 @@ function RoutinesView() {
 }
 
 // ── SETTINGS ─────────────────────────────────────────────
-function SettingsView({ user, onSignOut }: { user: User, onSignOut: () => void }) {
+function SettingsView({ user, profile, onSignOut }: { user: User, profile: any, onSignOut: () => void }) {
+  const router = useRouter()
+
   return (
     <div className="space-y-4 max-w-lg mx-auto">
       <h2 className="text-2xl font-bold text-white">Settings</h2>
@@ -227,12 +292,28 @@ function SettingsView({ user, onSignOut }: { user: User, onSignOut: () => void }
       {/* Settings items */}
       <div className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800">
         {[
-          { label: 'Shift pattern',  sub: 'Set up your rota',       icon: '🔄' },
-          { label: 'Notifications',  sub: 'Alerts and reminders',   icon: '🔔' },
-          { label: 'Subscription',   sub: '14-day trial active',    icon: '💳' },
+          {
+            label: 'Shift pattern',
+            sub: profile?.pattern_type === 'fixed' ? 'Fixed rotation' : profile?.pattern_type === 'nights' ? 'Nights only' : 'Not set',
+            icon: '🔄',
+            onClick: () => router.push('/onboarding')
+          },
+          {
+            label: 'Notifications',
+            sub: 'Alerts and reminders',
+            icon: '🔔',
+            onClick: () => {}
+          },
+          {
+            label: 'Subscription',
+            sub: '14-day trial active',
+            icon: '💳',
+            onClick: () => {}
+          },
         ].map((item, i) => (
           <div
             key={item.label}
+            onClick={item.onClick}
             className={`flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-800 transition ${
               i > 0 ? 'border-t border-gray-800' : ''
             }`}
@@ -254,7 +335,7 @@ function SettingsView({ user, onSignOut }: { user: User, onSignOut: () => void }
         Sign out
       </button>
 
-      <p className="text-center text-gray-700 text-xs pb-4">ShiftWell v0.1 — Sprint 1</p>
+      <p className="text-center text-gray-700 text-xs pb-4">ShiftWell v0.2 — Sprint 2</p>
     </div>
   )
 }
