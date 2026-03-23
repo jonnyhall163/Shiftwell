@@ -26,7 +26,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .eq('id', userId)
     .single()
 
-  if (error || !profile) return res.status(404).json({ error: 'Profile not found' })
+  console.log('userId received:', userId)
+  console.log('profile:', profile)
+  console.log('error:', error)
+
+  if (error || !profile) return res.status(404).json({ error: 'Profile not found', userId, supabaseError: error?.message })
 
   const patternData = profile.pattern_data as PatternData
   if (!patternData) return res.status(400).json({ error: 'No shift pattern set' })
