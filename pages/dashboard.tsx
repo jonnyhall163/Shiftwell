@@ -120,9 +120,13 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
 
     const fetchBriefing = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession()
         const res = await fetch('/api/briefing', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          },
           body: JSON.stringify({ userId: user.id }),
         })
         const data = await res.json()

@@ -8,29 +8,38 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
 })
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { userId } = req.body
-  if (!userId) return res.status(400).json({ error: 'Missing userId' })
+  const authHeader = req.headers.authorization
+  if (!authHeader) return res.status(401).json({ error: 'No auth header' })
+
+  // Use the user's own JWT — no service role key needed
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: { Authorization: authHeader }
+      }
+    }
+  )
+
+  // Get user from their JWT
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) return res.status(401).json({ error: 'Invalid user' })
 
   // Get profile
   const { data: profile, error } = await supabase
     .from('shiftwell_profiles')
     .select('*')
-    .eq('id', userId)
+    .eq('id', user.id)
     .single()
 
-  console.log('userId received:', userId)
   console.log('profile:', profile)
   console.log('error:', error)
 
-  if (error || !profile) return res.status(404).json({ error: 'Profile not found', userId, supabaseError: error?.message })
+  if (error || !profile) return res.status(404).json({ error: 'Profile not found' })
 
   const patternData = profile.pattern_data as PatternData
   if (!patternData) return res.status(400).json({ error: 'No shift pattern set' })
