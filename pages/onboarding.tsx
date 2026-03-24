@@ -103,6 +103,7 @@ export default function Onboarding() {
       alert('Something went wrong. Please try again.')
       setSaving(false)
     }
+  }
 
   const progressSteps: Step[] = ['type', 'configure', 'rotation', 'life']
 
