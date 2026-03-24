@@ -5,6 +5,7 @@ import { getTodayShift, formatShiftTime } from '../lib/shiftEngine'
 import type { User } from '@supabase/supabase-js'
 import type { PatternData, TodayShift } from '../lib/shiftEngine'
 import { ROUTINES, CATEGORY_META, getRecommendedRoutine } from '../lib/routines'
+import { getFoodPlan } from '../lib/foodEngine'
 
 const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
@@ -112,7 +113,7 @@ export default function Dashboard() {
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
         {activeTab === 'today'    && <TodayView user={user} profile={profile} />}
         {activeTab === 'sleep'    && <SleepView user={user} />}
-        {activeTab === 'food'     && <FoodView />}
+        {activeTab === 'food' && <FoodView profile={profile} />}
         {activeTab === 'routines' && <RoutinesView user={user} profile={profile} />}
         {activeTab === 'companion' && <CompanionView user={user} profile={profile} />}
       </main>
@@ -575,20 +576,73 @@ function HydrationCard({ user, profile, onUpdate }: { user: User, profile: any, 
 }
 
 // ── FOOD ─────────────────────────────────────────────────
-function FoodView() {
-  return (
-    <div className="space-y-4 max-w-lg mx-auto">
-      <h2 className="text-2xl font-bold text-white">Food</h2>
-      <div className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-800">
-        <div className="text-5xl mb-4">🍽️</div>
-        <h3 className="text-white font-semibold mb-2">Meal planner</h3>
-        <p className="text-gray-400 text-sm leading-relaxed">
-          No breakfast, lunch, or dinner here. Just Meal 1, 2, 3 —
-          whenever your shift says it is time to eat.
-        </p>
-        <div className="mt-4 inline-block bg-teal-900/40 text-teal-300 text-xs px-3 py-1 rounded-full">
-          Coming in Sprint 4
+function FoodView({ profile }: { profile: any }) {
+  const todayShift = profile?.pattern_data
+    ? getTodayShift(profile.pattern_data as PatternData)
+    : null
+
+  if (!todayShift) {
+    return (
+      <div className="space-y-4 max-w-lg mx-auto">
+        <h2 className="text-2xl font-bold text-white">Food</h2>
+        <div className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-800">
+          <div className="text-5xl mb-4">🍽️</div>
+          <p className="text-gray-400 text-sm">Set up your shift pattern in Settings to unlock your meal timing guide.</p>
         </div>
+      </div>
+    )
+  }
+
+  const plan = getFoodPlan(todayShift)
+
+  return (
+    <div className="space-y-5 max-w-lg mx-auto">
+      <div>
+        <h2 className="text-2xl font-bold text-white">Food</h2>
+        <p className="text-gray-500 text-sm mt-1">
+          {todayShift.isOff ? 'Rest day' : `${todayShift.label} shift · ${formatShiftTime(todayShift.startTime, todayShift.endTime)}`}
+        </p>
+      </div>
+
+      {/* Prep tip */}
+      <div className="bg-teal-950/60 border border-teal-700/30 rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-xs">✦</div>
+          <span className="text-teal-300 font-semibold text-sm">Shift tip</span>
+        </div>
+        <p className="text-gray-300 text-sm leading-relaxed">{plan.prepTip}</p>
+      </div>
+
+      {/* Meal windows */}
+      <div className="space-y-3">
+        {plan.meals.map((meal, i) => (
+          <div key={i} className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+            {/* Meal header */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-800">
+              <span className="text-2xl">{meal.icon}</span>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-white font-semibold text-sm">{meal.label}</p>
+                  <span className="text-teal-400 text-xs font-medium">{meal.time}</span>
+                </div>
+                <p className="text-gray-500 text-xs mt-0.5">{meal.description}</p>
+              </div>
+            </div>
+
+            {/* Suggestion */}
+            <div className="px-5 py-3">
+              <p className="text-xs text-gray-600 mb-1">Suggestion</p>
+              <p className="text-gray-300 text-sm leading-relaxed">{meal.suggestion}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Note */}
+      <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+        <p className="text-gray-600 text-xs leading-relaxed text-center">
+          Meal times are calculated from your shift pattern. Never breakfast, lunch or dinner — just Meal 1, 2, 3 whenever your body needs them.
+        </p>
       </div>
     </div>
   )
