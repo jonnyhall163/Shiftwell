@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { getTodayShift, formatShiftTime } from '../lib/shiftEngine'
 import type { User } from '@supabase/supabase-js'
 import type { PatternData, TodayShift } from '../lib/shiftEngine'
+import { ROUTINES, CATEGORY_META, getRecommendedRoutine } from '../lib/routines'
 
 const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
@@ -112,7 +113,7 @@ export default function Dashboard() {
         {activeTab === 'today'    && <TodayView user={user} profile={profile} />}
         {activeTab === 'sleep'    && <SleepView user={user} />}
         {activeTab === 'food'     && <FoodView />}
-        {activeTab === 'routines' && <RoutinesView />}
+        {activeTab === 'routines' && <RoutinesView user={user} profile={profile} />}
         {activeTab === 'companion' && <CompanionView user={user} profile={profile} />}
       </main>
 
@@ -594,20 +595,302 @@ function FoodView() {
 }
 
 // ── ROUTINES ─────────────────────────────────────────────
-function RoutinesView() {
-  return (
-    <div className="space-y-4 max-w-lg mx-auto">
-      <h2 className="text-2xl font-bold text-white">Routines</h2>
-      <div className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-800">
-        <div className="text-5xl mb-4">⚡</div>
-        <h3 className="text-white font-semibold mb-2">Shift-friendly workouts</h3>
-        <p className="text-gray-400 text-sm leading-relaxed">
-          15 minutes in your scrubs counts. Short, home-based routines
-          that work before or after any shift.
-        </p>
-        <div className="mt-4 inline-block bg-teal-900/40 text-teal-300 text-xs px-3 py-1 rounded-full">
-          Coming in Sprint 3
+function RoutinesView({ user, profile }: { user: User, profile: any }) {
+  const [activeRoutine, setActiveRoutine] = useState<any>(null)
+  const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [isResting, setIsResting] = useState(false)
+  const [isRunning, setIsRunning] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const todayShift = profile?.pattern_data
+    ? getTodayShift(profile.pattern_data as PatternData)
+    : null
+
+  const recommended = todayShift
+    ? getRecommendedRoutine(todayShift.label, todayShift.isOff, new Date().getHours())
+    : ROUTINES[0]
+
+  const filteredRoutines = selectedCategory
+    ? ROUTINES.filter(r => r.category === selectedCategory)
+    : ROUTINES
+
+  useEffect(() => {
+    if (!isRunning) return
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          handleTimerEnd()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [isRunning, activeExerciseIndex, isResting])
+
+  const handleTimerEnd = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    setIsRunning(false)
+
+    if (!activeRoutine) return
+    const exercise = activeRoutine.exercises[activeExerciseIndex]
+
+    if (!isResting && exercise.rest && exercise.rest > 0) {
+      setIsResting(true)
+      setTimeLeft(exercise.rest)
+      setIsRunning(true)
+      return
+    }
+
+    const nextIndex = activeExerciseIndex + 1
+    if (nextIndex >= activeRoutine.exercises.length) {
+      setIsComplete(true)
+      logRoutine()
+      return
+    }
+
+    setIsResting(false)
+    setActiveExerciseIndex(nextIndex)
+    setTimeLeft(activeRoutine.exercises[nextIndex].duration)
+    setIsRunning(true)
+  }
+
+  const logRoutine = async () => {
+    const { data: { user: u } } = await supabase.auth.getUser()
+    if (!u || !activeRoutine) return
+    await supabase.from('shiftwell_routines_log').insert({
+      user_id: u.id,
+      routine_name: activeRoutine.name,
+      category: activeRoutine.category,
+      duration_minutes: activeRoutine.duration,
+    })
+  }
+
+  const startRoutine = (routine: any) => {
+    setActiveRoutine(routine)
+    setActiveExerciseIndex(0)
+    setTimeLeft(routine.exercises[0].duration)
+    setIsResting(false)
+    setIsRunning(false)
+    setIsComplete(false)
+  }
+
+  const toggleTimer = () => setIsRunning(prev => !prev)
+
+  const skipExercise = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    setIsRunning(false)
+    const nextIndex = activeExerciseIndex + 1
+    if (nextIndex >= activeRoutine.exercises.length) {
+      setIsComplete(true)
+      logRoutine()
+      return
+    }
+    setIsResting(false)
+    setActiveExerciseIndex(nextIndex)
+    setTimeLeft(activeRoutine.exercises[nextIndex].duration)
+  }
+
+  const exitRoutine = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    setActiveRoutine(null)
+    setIsRunning(false)
+    setIsComplete(false)
+  }
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+
+  const circumference = 2 * Math.PI * 45
+
+  // ── Active routine view ──
+  if (activeRoutine) {
+    const exercise = activeRoutine.exercises[activeExerciseIndex]
+    const totalDuration = isResting ? (exercise.rest || 0) : exercise.duration
+    const progress = totalDuration > 0 ? (timeLeft / totalDuration) : 0
+
+    if (isComplete) {
+      return (
+        <div className="max-w-lg mx-auto text-center space-y-6 pt-8">
+          <div className="text-6xl">🎉</div>
+          <h2 className="text-2xl font-bold text-white">Routine complete!</h2>
+          <p className="text-gray-400">{activeRoutine.name} — {activeRoutine.duration} mins done.</p>
+          <div className="bg-teal-950/60 border border-teal-700/30 rounded-2xl p-5">
+            <p className="text-teal-300 text-sm">Logged to your history. That counts — no matter how small it felt.</p>
+          </div>
+          <button
+            onClick={exitRoutine}
+            className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
+          >
+            Back to routines
+          </button>
         </div>
+      )
+    }
+
+    return (
+      <div className="max-w-lg mx-auto space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-white font-bold text-lg">{activeRoutine.name}</h2>
+            <p className="text-gray-500 text-xs mt-0.5">
+              Exercise {activeExerciseIndex + 1} of {activeRoutine.exercises.length}
+            </p>
+          </div>
+          <button onClick={exitRoutine} className="text-gray-600 hover:text-gray-400 text-sm transition">
+            Exit
+          </button>
+        </div>
+
+        {/* Progress bar */}
+        <div className="flex gap-1">
+          {activeRoutine.exercises.map((_: any, i: number) => (
+            <div
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-colors ${
+                i < activeExerciseIndex ? 'bg-teal-500' :
+                i === activeExerciseIndex ? 'bg-teal-400' : 'bg-gray-800'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Timer circle */}
+        <div className="flex flex-col items-center py-6">
+          <div className="relative w-36 h-36">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#1f2937" strokeWidth="8" />
+              <circle
+                cx="50" cy="50" r="45" fill="none"
+                stroke={isResting ? '#6366f1' : '#2dd4bf'}
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={circumference * (1 - progress)}
+                className="transition-all duration-1000"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-white text-3xl font-bold">{formatTime(timeLeft)}</span>
+              <span className="text-gray-500 text-xs mt-1">{isResting ? 'Rest' : 'Go'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Exercise card */}
+        <div className={`rounded-2xl p-5 border ${isResting ? 'bg-indigo-950/40 border-indigo-700/30' : 'bg-gray-900 border-gray-800'}`}>
+          <p className={`font-semibold text-lg mb-2 ${isResting ? 'text-indigo-300' : 'text-white'}`}>
+            {isResting ? '💤 Rest' : exercise.name}
+          </p>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            {isResting ? 'Breathe. Next exercise coming up.' : exercise.instruction}
+          </p>
+        </div>
+
+        {/* Next up */}
+        {!isResting && activeExerciseIndex + 1 < activeRoutine.exercises.length && (
+          <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-800">
+            <p className="text-gray-600 text-xs">Next up</p>
+            <p className="text-gray-400 text-sm">{activeRoutine.exercises[activeExerciseIndex + 1].name}</p>
+          </div>
+        )}
+
+        {/* Controls */}
+        <div className="flex gap-3">
+          <button
+            onClick={toggleTimer}
+            className="flex-1 bg-teal-500 hover:bg-teal-400 text-gray-950 font-bold py-4 rounded-xl transition text-lg"
+          >
+            {isRunning ? '⏸' : '▶'}
+          </button>
+          <button
+            onClick={skipExercise}
+            className="bg-gray-800 hover:bg-gray-700 text-gray-400 font-medium px-5 py-4 rounded-xl transition text-sm"
+          >
+            Skip →
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Routine browser ──
+  return (
+    <div className="space-y-5 max-w-lg mx-auto">
+      <h2 className="text-2xl font-bold text-white">Routines</h2>
+
+      {/* AI Recommendation */}
+      <div className="bg-teal-950/60 border border-teal-700/30 rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-xs">✦</div>
+          <span className="text-teal-300 font-semibold text-sm">Recommended for you</span>
+          <span className="ml-auto text-gray-600 text-xs">
+            {todayShift?.isOff ? 'Rest day' : `${todayShift?.label} shift`}
+          </span>
+        </div>
+        <p className="text-white font-semibold mb-1">{recommended.name}</p>
+        <p className="text-gray-400 text-sm mb-4">{recommended.description}</p>
+        <div className="flex items-center justify-between">
+          <span className="text-gray-600 text-xs">⏱ {recommended.duration} mins · {recommended.exercises.length} exercises</span>
+          <button
+            onClick={() => startRoutine(recommended)}
+            className="bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold px-4 py-2 rounded-lg text-sm transition"
+          >
+            Start →
+          </button>
+        </div>
+      </div>
+
+      {/* Category filter */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <button
+          onClick={() => setSelectedCategory(null)}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
+            !selectedCategory ? 'bg-teal-500 text-gray-950' : 'bg-gray-800 text-gray-400'
+          }`}
+        >
+          All
+        </button>
+        {Object.entries(CATEGORY_META).map(([key, meta]) => (
+          <button
+            key={key}
+            onClick={() => setSelectedCategory(selectedCategory === key ? null : key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
+              selectedCategory === key ? 'bg-teal-500 text-gray-950' : 'bg-gray-800 text-gray-400'
+            }`}
+          >
+            {meta.icon} {meta.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Routine list */}
+      <div className="space-y-3">
+        {filteredRoutines.map(routine => (
+          <div key={routine.id} className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">{CATEGORY_META[routine.category].icon}</span>
+                  <p className="text-white font-semibold text-sm">{routine.name}</p>
+                </div>
+                <p className="text-gray-400 text-xs leading-relaxed">{routine.description}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between mt-3">
+              <span className="text-gray-600 text-xs">⏱ {routine.duration} mins · {routine.exercises.length} exercises</span>
+              <button
+                onClick={() => startRoutine(routine)}
+                className="bg-gray-800 hover:bg-gray-700 text-teal-400 font-semibold px-4 py-2 rounded-lg text-sm transition border border-gray-700"
+              >
+                Start →
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
