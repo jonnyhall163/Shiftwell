@@ -446,4 +446,3 @@ const SHIFT_BG_COLOURS = [
   'bg-pink-900/60 border-pink-700/30',
   'bg-green-900/60 border-green-700/30',
 ]
-}
