@@ -100,10 +100,53 @@ export default function Dashboard() {
                 <p className="text-gray-400 text-xs truncate">{user.email}</p>
               </div>
               {[
-                { label: 'Shift pattern', icon: '🔄', onClick: () => { router.push('/onboarding'); setShowProfileMenu(false) } },
-                { label: 'Notifications', icon: '🔔', onClick: () => setShowProfileMenu(false) },
-                { label: 'Subscription',  icon: '💳', onClick: () => setShowProfileMenu(false) },
-              ].map(item => (
+                {
+                  label: 'Shift pattern',
+                  icon: '🔄',
+                  sub: profile?.pattern_type === 'fixed' ? 'Fixed rotation' : 'Nights only',
+                  onClick: () => { router.push('/onboarding'); setShowProfileMenu(false) }
+                },
+                {
+                  label: 'Notifications',
+                  icon: '🔔',
+                  sub: 'Coming soon',
+                  onClick: () => setShowProfileMenu(false)
+                },
+                {
+                  label: 'Subscription',
+                  icon: '💳',
+                  sub: profile?.subscription_status === 'active' ? 'Active' :
+                       profile?.subscription_status === 'trialing' ? '14-day trial' :
+                       profile?.subscription_status === 'past_due' ? 'Payment failed' :
+                       profile?.subscription_status === 'canceled' ? 'Canceled' : 'Manage',
+                  onClick: async () => {
+                    setShowProfileMenu(false)
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) return
+                    const res = await fetch('/api/stripe/portal', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                      }
+                    })
+                    const data = await res.json()
+                    if (data.url) window.location.href = data.url
+                  }
+                },
+              ].map((item, i) => (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-700 transition border-b border-gray-700/50 last:border-0`}
+                >
+                  <span>{item.icon}</span>
+                  <div className="flex-1">
+                    <p className="text-white text-sm">{item.label}</p>
+                    <p className="text-gray-500 text-xs">{item.sub}</p>
+                  </div>
+                </button>
+              ))}
                 <button
                   key={item.label}
                   onClick={item.onClick}

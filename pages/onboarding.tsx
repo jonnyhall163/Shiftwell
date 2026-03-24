@@ -88,12 +88,21 @@ export default function Onboarding() {
       .eq('id', user.id)
 
     if (!error) {
-      router.push('/dashboard')
+      const { data: updatedProfile } = await supabase
+        .from('shiftwell_profiles')
+        .select('stripe_customer_id')
+        .eq('id', user.id)
+        .single()
+
+      if (updatedProfile?.stripe_customer_id) {
+        router.push('/dashboard')
+      } else {
+        router.push('/subscribe')
+      }
     } else {
       alert('Something went wrong. Please try again.')
       setSaving(false)
     }
-  }
 
   const progressSteps: Step[] = ['type', 'configure', 'rotation', 'life']
 
@@ -436,3 +445,4 @@ const SHIFT_BG_COLOURS = [
   'bg-pink-900/60 border-pink-700/30',
   'bg-green-900/60 border-green-700/30',
 ]
+}
