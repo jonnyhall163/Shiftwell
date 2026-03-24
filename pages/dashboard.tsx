@@ -39,8 +39,24 @@ export default function Dashboard() {
         return
       }
 
+      // ── Paywall check ────────────────────────────────
+      const status = profile?.subscription_status
+      const trialEnd = profile?.trial_ends_at
+        ? new Date(profile.trial_ends_at)
+        : null
+
+      const trialExpired = trialEnd && trialEnd < new Date()
+      const isActive = status === 'active' || status === 'trialing'
+      const isCanceled = status === 'canceled' || status === 'past_due'
+
+      if (isCanceled || (trialExpired && status !== 'active')) {
+        router.push('/subscribe?expired=true')
+        return
+      }
+
       setProfile(profile)
     }
+
     init()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
