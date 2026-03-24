@@ -73,7 +73,7 @@ export default function Dashboard() {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
         {activeTab === 'today'    && <TodayView user={user} profile={profile} />}
-        {activeTab === 'sleep'    && <SleepView />}
+        {activeTab === 'sleep'    && <SleepView user={user} />}
         {activeTab === 'food'     && <FoodView />}
         {activeTab === 'routines' && <RoutinesView />}
         {activeTab === 'settings' && <SettingsView user={user} profile={profile} onSignOut={handleSignOut} />}
@@ -103,6 +103,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
   const [briefing, setBriefing] = useState<string>('')
   const [loadingBriefing, setLoadingBriefing] = useState(true)
   const [todayShift, setTodayShift] = useState<TodayShift | null>(null)
+  const [hydrationCount, setHydrationCount] = useState(0)
 
   const hour = new Date().getHours()
   const greeting =
@@ -176,12 +177,16 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
       <div className="grid grid-cols-2 gap-3">
         {[
           { label: 'Sleep logged',  value: '—',       icon: '🌙' },
-          { label: 'Hydration',     value: '0 / 8',   icon: '💧' },
           { label: 'Next meal',     value: 'Not set', icon: '🍽️' },
           {
             label: 'Today',
             value: todayShift?.label || 'Not set',
             icon: '🔄'
+          },
+          {
+            label: 'Hydration',
+            value: `${hydrationCount} / 8`,
+            icon: '💧'
           },
         ].map(card => (
           <div key={card.label} className="bg-gray-900 rounded-xl p-4">
@@ -191,6 +196,13 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
           </div>
         ))}
       </div>
+
+      {/* Hydration tracker */}
+      <HydrationCard
+        user={user}
+        profile={profile}
+        onUpdate={(count) => setHydrationCount(count)}
+      />
 
       {/* Rotation position */}
       {todayShift?.dayInCycle && (
@@ -211,20 +223,293 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
 }
 
 // ── SLEEP ────────────────────────────────────────────────
-function SleepView() {
+function SleepView({ user }: { user: User }) {
+  const [logs, setLogs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [sleepStart, setSleepStart] = useState('')
+  const [sleepEnd, setSleepEnd] = useState('')
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const fetchLogs = async () => {
+    const { data } = await supabase
+      .from('shiftwell_sleep')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('sleep_start', { ascending: false })
+      .limit(10)
+    setLogs(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchLogs() }, [])
+
+  const handleSave = async () => {
+    if (!sleepStart || !sleepEnd) return
+    setSaving(true)
+
+    const { error } = await supabase
+      .from('shiftwell_sleep')
+      .insert({
+        user_id: user.id,
+        sleep_start: new Date(sleepStart).toISOString(),
+        sleep_end: new Date(sleepEnd).toISOString(),
+        notes: notes || null,
+      })
+
+    if (!error) {
+      setShowForm(false)
+      setSleepStart('')
+      setSleepEnd('')
+      setNotes('')
+      fetchLogs()
+    }
+    setSaving(false)
+  }
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('shiftwell_sleep').delete().eq('id', id)
+    fetchLogs()
+  }
+
+  const formatDuration = (minutes: number) => {
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+  }
+
+  const formatTime = (iso: string) => {
+    return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const formatDate = (iso: string) => {
+    return new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  }
+
+  const totalToday = logs
+    .filter(l => new Date(l.sleep_start).toDateString() === new Date().toDateString())
+    .reduce((sum, l) => sum + (l.duration_minutes || 0), 0)
+
   return (
     <div className="space-y-4 max-w-lg mx-auto">
-      <h2 className="text-2xl font-bold text-white">Sleep</h2>
-      <div className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-800">
-        <div className="text-5xl mb-4">🌙</div>
-        <h3 className="text-white font-semibold mb-2">Sleep tracker</h3>
-        <p className="text-gray-400 text-sm leading-relaxed">
-          Built for fragmented and split sleep — not just 8-hour blocks.
-          Log any sleep window, any time.
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">Sleep</h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold px-4 py-2 rounded-lg text-sm transition"
+        >
+          + Log sleep
+        </button>
+      </div>
+
+      {/* Today summary */}
+      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+        <p className="text-gray-500 text-xs mb-1">Total sleep logged today</p>
+        <p className="text-white text-3xl font-bold">
+          {totalToday > 0 ? formatDuration(totalToday) : '—'}
         </p>
-        <div className="mt-4 inline-block bg-teal-900/40 text-teal-300 text-xs px-3 py-1 rounded-full">
-          Coming in Sprint 3
+        <p className="text-gray-600 text-xs mt-1">Log any sleep window — naps count too</p>
+      </div>
+
+      {/* Log form */}
+      {showForm && (
+        <div className="bg-gray-900 rounded-2xl p-5 border border-teal-700/30 space-y-4">
+          <p className="text-white font-semibold text-sm">Log a sleep window</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Fell asleep</label>
+              <input
+                type="datetime-local"
+                value={sleepStart}
+                onChange={e => setSleepStart(e.target.value)}
+                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Woke up</label>
+              <input
+                type="datetime-local"
+                value={sleepEnd}
+                onChange={e => setSleepEnd(e.target.value)}
+                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Notes (optional)</label>
+            <input
+              type="text"
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="e.g. woke up twice, felt rested..."
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving || !sleepStart || !sleepEnd}
+              className="flex-1 bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-2 rounded-lg text-sm transition disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              className="px-4 py-2 text-gray-400 hover:text-gray-200 text-sm transition"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* Sleep log list */}
+      {loading ? (
+        <div className="space-y-3">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-gray-900 rounded-2xl p-4 border border-gray-800 animate-pulse h-16" />
+          ))}
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-800">
+          <div className="text-4xl mb-3">🌙</div>
+          <p className="text-gray-400 text-sm">No sleep logged yet. Log any window — even a nap counts.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {logs.map(log => (
+            <div key={log.id} className="bg-gray-900 rounded-2xl p-4 border border-gray-800 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-semibold text-sm">
+                    {formatDuration(log.duration_minutes)}
+                  </span>
+                  <span className="text-gray-600 text-xs">
+                    {formatTime(log.sleep_start)} – {formatTime(log.sleep_end)}
+                  </span>
+                </div>
+                <p className="text-gray-500 text-xs mt-0.5">{formatDate(log.sleep_start)}</p>
+                {log.notes && <p className="text-gray-600 text-xs mt-0.5 italic">{log.notes}</p>}
+              </div>
+              <button
+                onClick={() => handleDelete(log.id)}
+                className="text-gray-700 hover:text-red-400 text-lg transition ml-4"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── HYDRATION ────────────────────────────────────────────
+function HydrationCard({ user, profile, onUpdate }: { user: User, profile: any, onUpdate: (count: number) => void }) {
+  const [count, setCount] = useState(0)
+  const [saving, setSaving] = useState(false)
+  const goal = 8
+
+  useEffect(() => {
+    const todayDate = new Date().toISOString().split('T')[0]
+    if (profile?.hydration_date === todayDate) {
+      setCount(profile?.hydration_count || 0)
+    } else {
+      setCount(0)
+    }
+  }, [profile])
+
+  const updateCount = async (newCount: number) => {
+    if (newCount < 0 || newCount > 20) return
+    setSaving(true)
+    const todayDate = new Date().toISOString().split('T')[0]
+
+    await supabase
+      .from('shiftwell_profiles')
+      .update({
+        hydration_count: newCount,
+        hydration_date: todayDate,
+      })
+      .eq('id', user.id)
+
+    setCount(newCount)
+    onUpdate(newCount)
+    setSaving(false)
+  }
+
+  const percentage = Math.min((count / goal) * 100, 100)
+
+  return (
+    <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-white font-semibold">💧 Hydration</p>
+          <p className="text-gray-500 text-xs mt-0.5">
+            {count >= goal
+              ? 'Goal reached! Keep it up 💪'
+              : `${goal - count} more to hit your goal`}
+          </p>
+        </div>
+        <div className="text-right">
+          <span className="text-2xl font-bold text-white">{count}</span>
+          <span className="text-gray-500 text-sm"> / {goal}</span>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-2 bg-gray-800 rounded-full mb-4 overflow-hidden">
+        <div
+          className="h-full bg-teal-500 rounded-full transition-all duration-300"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+
+      {/* Glass indicators */}
+      <div className="grid grid-cols-8 gap-1.5 mb-4">
+        {Array.from({ length: goal }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => updateCount(i < count ? i : i + 1)}
+            disabled={saving}
+            className={`aspect-square rounded-lg flex items-center justify-center text-lg transition-colors ${
+              i < count
+                ? 'bg-teal-500/30 border border-teal-500/50'
+                : 'bg-gray-800 border border-gray-700'
+            }`}
+          >
+            <span className={i < count ? 'opacity-100' : 'opacity-30'}>💧</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Controls */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => updateCount(count - 1)}
+          disabled={count === 0 || saving}
+          className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 rounded-lg transition disabled:opacity-30 text-lg"
+        >
+          −
+        </button>
+        <button
+          onClick={() => updateCount(count + 1)}
+          disabled={count >= 20 || saving}
+          className="flex-2 bg-teal-500 hover:bg-teal-400 text-gray-950 font-bold py-2 px-8 rounded-lg transition disabled:opacity-50 text-sm font-semibold"
+        >
+          + Add glass
+        </button>
+        <button
+          onClick={() => updateCount(count - 1)}
+          disabled={count === 0 || saving}
+          className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 rounded-lg transition disabled:opacity-30 text-lg"
+        >
+          −
+        </button>
       </div>
     </div>
   )
@@ -243,7 +528,7 @@ function FoodView() {
           whenever your shift says it is time to eat.
         </p>
         <div className="mt-4 inline-block bg-teal-900/40 text-teal-300 text-xs px-3 py-1 rounded-full">
-          Coming in Sprint 3
+          Coming in Sprint 4
         </div>
       </div>
     </div>
