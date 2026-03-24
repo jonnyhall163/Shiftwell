@@ -109,6 +109,7 @@ export default function Landing() {
           </div>
         </nav>
 
+        
         {/* Hero */}
         <section style={{ padding: '72px 24px 56px', textAlign: 'center', maxWidth: 680, margin: '0 auto' }} className="fade-up">
           <div style={{
