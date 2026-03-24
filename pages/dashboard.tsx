@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import { getTodayShift, formatShiftTime } from '../lib/shiftEngine'
@@ -6,17 +6,18 @@ import type { User } from '@supabase/supabase-js'
 import type { PatternData, TodayShift } from '../lib/shiftEngine'
 
 const tabs = [
-  { id: 'today',    label: 'Today',    icon: '☀️' },
-  { id: 'sleep',    label: 'Sleep',    icon: '🌙' },
-  { id: 'food',     label: 'Food',     icon: '🍽️' },
-  { id: 'routines', label: 'Routines', icon: '⚡' },
-  { id: 'settings', label: 'Settings', icon: '⚙️' },
+  { id: 'today',     label: 'Today',     icon: '☀️' },
+  { id: 'sleep',     label: 'Sleep',     icon: '🌙' },
+  { id: 'food',      label: 'Food',      icon: '🍽️' },
+  { id: 'routines',  label: 'Routines',  icon: '⚡' },
+  { id: 'companion', label: 'Companion', icon: '✦' },
 ]
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('today')
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<any>(null)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -65,8 +66,44 @@ export default function Dashboard() {
       {/* Header */}
       <header className="bg-gray-900 border-b border-gray-800 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
         <h1 className="text-white font-bold text-lg tracking-tight">ShiftWell</h1>
-        <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-bold">
-          {user?.user_metadata?.full_name?.[0] || user.email?.[0].toUpperCase()}
+        <div className="relative">
+          <button
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-bold"
+          >
+            {user?.user_metadata?.full_name?.[0] || user.email?.[0].toUpperCase()}
+          </button>
+          {showProfileMenu && (
+            <div className="absolute right-0 top-10 bg-gray-800 border border-gray-700 rounded-xl shadow-xl w-48 z-20 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-700">
+                <p className="text-white text-sm font-medium truncate">
+                  {user?.user_metadata?.full_name || 'ShiftWell user'}
+                </p>
+                <p className="text-gray-400 text-xs truncate">{user.email}</p>
+              </div>
+              {[
+                { label: 'Shift pattern', icon: '🔄', onClick: () => { router.push('/onboarding'); setShowProfileMenu(false) } },
+                { label: 'Notifications', icon: '🔔', onClick: () => setShowProfileMenu(false) },
+                { label: 'Subscription',  icon: '💳', onClick: () => setShowProfileMenu(false) },
+              ].map(item => (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-700 transition border-b border-gray-700/50 last:border-0"
+                >
+                  <span>{item.icon}</span>
+                  <span className="text-white text-sm">{item.label}</span>
+                </button>
+              ))}
+              <button
+                onClick={() => { handleSignOut(); setShowProfileMenu(false) }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-700 transition"
+              >
+                <span>🚪</span>
+                <span className="text-red-400 text-sm">Sign out</span>
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -76,7 +113,7 @@ export default function Dashboard() {
         {activeTab === 'sleep'    && <SleepView user={user} />}
         {activeTab === 'food'     && <FoodView />}
         {activeTab === 'routines' && <RoutinesView />}
-        {activeTab === 'settings' && <SettingsView user={user} profile={profile} onSignOut={handleSignOut} />}
+        {activeTab === 'companion' && <CompanionView user={user} profile={profile} />}
       </main>
 
       {/* Bottom nav */}
@@ -104,6 +141,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
   const [loadingBriefing, setLoadingBriefing] = useState(true)
   const [todayShift, setTodayShift] = useState<TodayShift | null>(null)
   const [hydrationCount, setHydrationCount] = useState(0)
+  const [sleepStat, setSleepStat] = useState('—')
 
   const hour = new Date().getHours()
   const greeting =
@@ -119,8 +157,28 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
       setTodayShift(shift)
     }
 
+    // ── Fetch last 24hrs sleep ────────────────────────
+    const fetchSleep = async () => {
+      const since = new Date()
+      since.setHours(since.getHours() - 24)
+
+      const { data } = await supabase
+        .from('shiftwell_sleep')
+        .select('duration_minutes')
+        .eq('user_id', user.id)
+        .gte('sleep_start', since.toISOString())
+
+      if (data && data.length > 0) {
+        const total = data.reduce((sum, l) => sum + (l.duration_minutes || 0), 0)
+        const h = Math.floor(total / 60)
+        const m = total % 60
+        setSleepStat(m > 0 ? `${h}h ${m}m` : `${h}h`)
+      }
+    }
+    fetchSleep()
+
     const fetchBriefing = async () => {
-      try {
+     try {
         const { data: { session } } = await supabase.auth.getSession()
         const res = await fetch('/api/briefing', {
           method: 'POST',
@@ -176,7 +234,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
       {/* Quick stats grid */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: 'Sleep logged',  value: '—',       icon: '🌙' },
+      { label: 'Sleep (24hrs)', value: sleepStat, icon: '🌙' },
           { label: 'Next meal',     value: 'Not set', icon: '🍽️' },
           {
             label: 'Today',
@@ -550,6 +608,153 @@ function RoutinesView() {
         <div className="mt-4 inline-block bg-teal-900/40 text-teal-300 text-xs px-3 py-1 rounded-full">
           Coming in Sprint 3
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── COMPANION ─────────────────────────────────────────────
+function CompanionView({ user, profile }: { user: User, profile: any }) {
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [opening, setOpening] = useState(true)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const hour = new Date().getHours()
+  const name = user?.user_metadata?.full_name?.split(' ')[0] || 'there'
+
+  const getOpeningMessage = () => {
+    const shift = profile?.pattern_data
+      ? getTodayShift(profile.pattern_data as PatternData)
+      : null
+
+    if (hour >= 0 && hour < 5) {
+      return `Hey ${name} — still going at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}. ${shift && !shift.isOff ? `Night ${shift.dayInCycle} of your rotation.` : ''} How are you holding up?`
+    }
+    if (hour >= 5 && hour < 12) {
+      return `Morning ${name}. ${shift?.isOff ? 'Rest day today — how are you feeling?' : `${shift?.label} shift today. How did the night treat you?`}`
+    }
+    if (hour >= 12 && hour < 18) {
+      return `Hey ${name}. ${shift?.isOff ? 'Hope you\'re making the most of your day off.' : `${shift?.label} shift ahead — how are you feeling going into it?`}`
+    }
+    return `Evening ${name}. ${shift?.isOff ? 'Rest day winding down — how was it?' : `How\'s the ${shift?.label} shift going?`}`
+  }
+
+  useEffect(() => {
+    const openingMsg = getOpeningMessage()
+    setMessages([{ role: 'assistant', content: openingMsg }])
+    setOpening(false)
+  }, [])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return
+
+    const userMessage = { role: 'user' as const, content: input.trim() }
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
+    setInput('')
+    setLoading(true)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/companion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          messages: updatedMessages.map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        }),
+      })
+
+      const data = await res.json()
+      if (data.reply) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+      }
+    } catch {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I lost connection for a moment. Try again?'
+      }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col h-full max-w-lg mx-auto" style={{ height: 'calc(100vh - 140px)' }}>
+
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-full bg-teal-950 border border-teal-700/40 flex items-center justify-center text-lg">
+          ✦
+        </div>
+        <div>
+          <p className="text-white font-semibold text-sm">ShiftWell Companion</p>
+          <p className="text-teal-400 text-xs">Here whenever you need it</p>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto space-y-3 pb-4">
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                msg.role === 'user'
+                  ? 'bg-teal-600 text-white rounded-br-sm'
+                  : 'bg-gray-900 text-gray-200 border border-gray-800 rounded-bl-sm'
+              }`}
+            >
+              {msg.content}
+            </div>
+          </div>
+        ))}
+
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-900 border border-gray-800 rounded-2xl rounded-bl-sm px-4 py-3">
+              <div className="flex gap-1 items-center">
+                <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input */}
+      <div className="flex gap-2 pt-2 border-t border-gray-800">
+        <input
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') sendMessage() }}
+          placeholder="Type something..."
+          className="flex-1 bg-gray-900 border border-gray-800 text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-600"
+        />
+        <button
+          onClick={sendMessage}
+          disabled={loading || !input.trim()}
+          className="bg-teal-500 hover:bg-teal-400 text-gray-950 font-bold px-4 rounded-xl transition disabled:opacity-40"
+        >
+          ↑
+        </button>
       </div>
     </div>
   )
