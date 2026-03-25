@@ -163,3 +163,22 @@ export function getFoodPlan(shift: TodayShift): FoodPlan {
     ]
   }
 }
+export function getNextMeal(shift: TodayShift): string {
+  if (!shift || shift.isOff) return 'Rest day'
+  const plan = getFoodPlan(shift)
+  const now = new Date()
+  const currentMins = now.getHours() * 60 + now.getMinutes()
+
+  for (const meal of plan.meals) {
+    // Take the start time from the range e.g. "14:00–15:00" → "14:00"
+    const startStr = meal.time.split('–')[0].trim()
+    if (!startStr.includes(':')) continue
+    const [h, m] = startStr.split(':').map(Number)
+    const mealMins = h * 60 + m
+    if (mealMins > currentMins) {
+      return `${meal.label} · ${startStr}`
+    }
+  }
+
+  return 'Done for today'
+}

@@ -5,7 +5,7 @@ import { getTodayShift, formatShiftTime } from '../lib/shiftEngine'
 import type { User } from '@supabase/supabase-js'
 import type { PatternData, TodayShift } from '../lib/shiftEngine'
 import { ROUTINES, CATEGORY_META, getRecommendedRoutine } from '../lib/routines'
-import { getFoodPlan } from '../lib/foodEngine'
+import { getFoodPlan, getNextMeal } from '../lib/foodEngine'
 
 const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
@@ -195,6 +195,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
   const [todayShift, setTodayShift] = useState<TodayShift | null>(null)
   const [hydrationCount, setHydrationCount] = useState(0)
   const [sleepStat, setSleepStat] = useState('—')
+  const [nextMeal, setNextMeal] = useState('—')
 
   const hour = new Date().getHours()
   const greeting =
@@ -208,6 +209,11 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
     if (profile?.pattern_data) {
       const shift = getTodayShift(profile.pattern_data as PatternData)
       setTodayShift(shift)
+      if (shift && !shift.isOff) {
+        setNextMeal(getNextMeal(shift))
+      } else if (shift?.isOff) {
+        setNextMeal('Rest day')
+      }
     }
 
     // ── Fetch last 24hrs sleep ────────────────────────
@@ -288,7 +294,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
       <div className="grid grid-cols-2 gap-3">
         {[
       { label: 'Sleep (24hrs)', value: sleepStat, icon: '🌙' },
-          { label: 'Next meal',     value: 'Not set', icon: '🍽️' },
+      { label: 'Next meal', value: nextMeal, icon: '🍽️' },
           {
             label: 'Today',
             value: todayShift?.label || 'Not set',
