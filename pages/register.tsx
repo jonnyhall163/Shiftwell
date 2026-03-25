@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useRouter } from 'next/router'
 import Link from 'next/link'
 
 export default function Register() {
@@ -8,14 +9,14 @@ export default function Register() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const router = useRouter()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -27,35 +28,28 @@ export default function Register() {
       setError(error.message)
       setLoading(false)
     } else {
-      setSuccess(true)
+      // Create profile row
+      if (data.user) {
+        await supabase.from('shiftwell_profiles').upsert({
+          id: data.user.id,
+          email: data.user.email,
+        })
+      }
+      router.push('/onboarding')
     }
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">✉️</div>
-          <h2 className="text-2xl font-bold text-white mb-3">Check your email</h2>
-          <p className="text-gray-400">
-            We sent a confirmation link to{' '}
-            <span className="text-white font-medium">{email}</span>.
-            Click it to activate your account.
-          </p>
-          <Link href="/login" className="mt-6 inline-block text-teal-400 hover:text-teal-300">
-            Back to login →
-          </Link>
-        </div>
-      </div>
-    )
   }
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">ShiftWell</h1>
-          <p className="text-gray-400 mt-2">14-day free trial — no card needed</p>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="w-2 h-2 rounded-full bg-teal-400" style={{ boxShadow: '0 0 6px #2dd4bf' }} />
+            <span className="text-white font-bold text-lg">ShiftWell</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Start your free trial</h1>
+          <p className="text-gray-400 text-sm mt-2">14 days free. Cancel within that time and pay nothing.</p>
         </div>
 
         <form onSubmit={handleRegister} className="bg-gray-900 rounded-2xl p-8 space-y-5">
@@ -70,7 +64,7 @@ export default function Register() {
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500"
               placeholder="First name"
             />
@@ -81,7 +75,7 @@ export default function Register() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500"
               placeholder="you@email.com"
@@ -93,7 +87,7 @@ export default function Register() {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               minLength={6}
               className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500"
@@ -106,14 +100,19 @@ export default function Register() {
             disabled={loading}
             className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-lg transition disabled:opacity-50"
           >
-            {loading ? 'Creating account...' : 'Start Free Trial'}
+            {loading ? 'Creating account...' : 'Start free trial →'}
           </button>
+
+          <p className="text-center text-xs text-gray-600 leading-relaxed">
+            By signing up you agree to our{' '}
+            <Link href="/terms" className="text-gray-500 hover:text-gray-300">Terms</Link>
+            {' '}and{' '}
+            <Link href="/privacy" className="text-gray-500 hover:text-gray-300">Privacy Policy</Link>
+          </p>
 
           <p className="text-center text-sm text-gray-500">
             Already have an account?{' '}
-            <Link href="/login" className="text-teal-400 hover:text-teal-300">
-              Sign in
-            </Link>
+            <Link href="/login" className="text-teal-400 hover:text-teal-300">Sign in</Link>
           </p>
         </form>
       </div>
