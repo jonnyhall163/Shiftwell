@@ -68,6 +68,8 @@ export default function Landing() {
           .feature-card:hover { border-color: rgba(45,212,191,0.25) !important; transform: translateY(-2px); }
           .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(45,212,191,0.3); }
           .cta-primary { transition: transform 0.15s, box-shadow 0.15s; }
+          .pricing-card { transition: border-color 0.2s, transform 0.2s; }
+          .pricing-card:hover { transform: translateY(-2px); }
         `}</style>
       </Head>
 
@@ -92,9 +94,7 @@ export default function Landing() {
             ShiftWell
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <Link href="/login" style={{
-              color: '#9ca3af', fontSize: 14, textDecoration: 'none', fontWeight: 400,
-            }}>
+            <Link href="/login" style={{ color: '#9ca3af', fontSize: 14, textDecoration: 'none', fontWeight: 400 }}>
               Sign in
             </Link>
             <Link href="/register" className="cta-primary" style={{
@@ -109,7 +109,6 @@ export default function Landing() {
           </div>
         </nav>
 
-        
         {/* Hero */}
         <section style={{ padding: '72px 24px 56px', textAlign: 'center', maxWidth: 680, margin: '0 auto' }} className="fade-up">
           <div style={{
@@ -136,7 +135,6 @@ export default function Landing() {
             Your app <span style={{ color: '#2dd4bf' }}>shouldn't</span> either.
           </h1>
 
-
           <p style={{
             fontSize: 17, fontWeight: 300, color: '#d1d5db',
             maxWidth: 500, margin: '0 auto 40px', lineHeight: 1.7
@@ -154,7 +152,7 @@ export default function Landing() {
             }}>
               Start your free 14-day trial →
             </Link>
-            <p style={{ fontSize: 12, color: '#6b7280' }}>No card required. Cancel anytime.</p>
+            <p style={{ fontSize: 12, color: '#6b7280' }}>Free for 14 days. Cancel before then and pay nothing.</p>
           </div>
 
           {/* Social proof */}
@@ -206,7 +204,7 @@ export default function Landing() {
             {[
               { icon: '🌙', title: 'Shift-Aware Sleep', desc: 'Sleep windows based on your actual rotation — not generic bedtime advice that assumes you sleep at night.' },
               { icon: '💧', title: 'Hydration Timing', desc: 'Reminders timed to your shift phase. Night workers dehydrate differently — we know that.' },
-              { icon: '✦', title: 'Daily AI Briefing', desc: 'A personalised briefing every morning that knows exactly where you are in your cycle.' },
+              { icon: '✦', title: 'Daily AI Briefing', desc: 'A personalised briefing every day that knows exactly where you are in your cycle.' },
               { icon: '💬', title: 'Your 3am Companion', desc: "Something that's awake when you are. For the moments when you can't sleep and don't want to wake anyone up." },
             ].map((f, i) => (
               <div key={i} className="feature-card" style={{
@@ -269,6 +267,90 @@ export default function Landing() {
             <div style={{ marginTop: 16, fontSize: 13, color: '#9ca3af' }}>— Jonny, Founder & fellow shift worker 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
           </div>
 
+          <Divider label="Pricing" />
+
+          {/* Pricing */}
+          <div className="fade-up-5" style={{ marginBottom: 64 }}>
+            <p style={{ textAlign: 'center', fontSize: 15, color: '#9ca3af', marginBottom: 32, fontWeight: 300 }}>
+              14-day free trial included. Cancel within 14 days and you won't be charged a penny.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Annual */}
+              <div className="pricing-card" style={{
+                background: 'linear-gradient(135deg, rgba(45,212,191,0.08), rgba(45,212,191,0.03))',
+                border: '1px solid rgba(45,212,191,0.35)',
+                borderRadius: 20, padding: '28px 24px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#2dd4bf', fontWeight: 600 }}>Annual</div>
+                  <div style={{
+                    background: '#fbbf24', color: '#090c14',
+                    fontSize: 10, fontWeight: 700, letterSpacing: 1,
+                    textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20
+                  }}>Best value</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£59.99</span>
+                  <span style={{ fontSize: 14, color: '#6b7280' }}>/year</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#2dd4bf', marginBottom: 24, fontWeight: 500 }}>
+                  That's £5/month — you save £36 a year
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[
+                    'Shift-aware daily briefing',
+                    'Sleep & hydration tracker',
+                    'Food timing guidance',
+                    '3am companion chat',
+                    'Routines & exercises',
+                  ].map((item, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
+                      <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Monthly */}
+              <div className="pricing-card" style={{
+                background: '#111827',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 20, padding: '28px 24px',
+              }}>
+                <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 600, marginBottom: 16 }}>Monthly</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 24 }}>
+                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£7.99</span>
+                  <span style={{ fontSize: 14, color: '#6b7280' }}>/month</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[
+                    'Shift-aware daily briefing',
+                    'Sleep & hydration tracker',
+                    'Food timing guidance',
+                    '3am companion chat',
+                    'Routines & exercises',
+                  ].map((item, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
+                      <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Reassurance */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 20, flexWrap: 'wrap' }}>
+              {['✓ 14-day free trial', '✓ Cancel anytime', '✓ No charge if you cancel early'].map((item, i) => (
+                <span key={i} style={{ fontSize: 12, color: '#6b7280' }}>{item}</span>
+              ))}
+            </div>
+          </div>
+
           {/* Footer CTA */}
           <div className="fade-up-5" style={{ textAlign: 'center', padding: '0 0 80px' }}>
             <h2 style={{
@@ -280,7 +362,7 @@ export default function Landing() {
               Ready to finally feel like<br />the app gets you?
             </h2>
             <p style={{ fontSize: 15, color: '#9ca3af', marginBottom: 32 }}>
-              Free 14-day trial. No card required. Cancel anytime.
+              Free 14-day trial. Cancel within 14 days and pay nothing.
             </p>
             <Link href="/register" className="cta-primary" style={{
               display: 'inline-block',
@@ -301,9 +383,15 @@ export default function Landing() {
 
         {/* Footer */}
         <footer style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '28px 24px', textAlign: 'center' }}>
+          <div style={{ marginBottom: 12 }}>
+            <a href="/privacy" style={{ color: '#64748b', marginRight: 24, fontSize: 14, textDecoration: 'none' }}>Privacy Policy</a>
+            <a href="/terms" style={{ color: '#64748b', marginRight: 24, fontSize: 14, textDecoration: 'none' }}>Terms & Conditions</a>
+            <a href="/contact" style={{ color: '#64748b', fontSize: 14, textDecoration: 'none' }}>Contact</a>
+          </div>
           <p style={{ fontSize: 12, color: '#9ca3af' }}>
             © 2026 ShiftWell. Made in Glasgow 🏴󠁧󠁢󠁳󠁣󠁴󠁿 — for every nurse, engineer, officer and worker keeping the world running overnight.
           </p>
+          <p style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>Growvia Digital Ltd</p>
         </footer>
 
       </div>
