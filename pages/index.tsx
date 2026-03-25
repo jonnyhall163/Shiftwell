@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import ShiftWellDemo from '../components/ShiftWellDemo'
 
 export default function Landing() {
   const starsRef = useRef<HTMLDivElement>(null)
@@ -218,43 +219,6 @@ export default function Landing() {
             ))}
           </div>
 
-          <Divider label="A Taste of ShiftWell" />
-
-          {/* Demo card */}
-          <div className="fade-up-4" style={{
-            background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 20, overflow: 'hidden', marginBottom: 64
-          }}>
-            <div style={{
-              background: '#1a2235', padding: '14px 20px',
-              display: 'flex', alignItems: 'center', gap: 10,
-              borderBottom: '1px solid rgba(255,255,255,0.1)'
-            }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2dd4bf', boxShadow: '0 0 8px #2dd4bf', flexShrink: 0 }} />
-              <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 13, color: '#d1d5db' }}>Today's Briefing</span>
-              <div style={{
-                marginLeft: 'auto', fontSize: 11, padding: '3px 10px',
-                borderRadius: 20, background: 'rgba(245,158,11,0.12)',
-                border: '1px solid rgba(245,158,11,0.2)', color: '#fbbf24', fontWeight: 500
-              }}>Night 3 of 4</div>
-            </div>
-            <div style={{ padding: 24 }}>
-              {[
-                { icon: '🌙', content: <><strong style={{ color: '#f3f4f6', fontWeight: 500 }}>Sleep window:</strong> You finish at 07:00 — aim to be in bed by <span style={{ color: '#2dd4bf', fontWeight: 500 }}>08:30</span>. Blackout blinds on, phone on silent. Transition to days in 48 hours — this window matters.</> },
-                { icon: '💧', content: <><strong style={{ color: '#f3f4f6', fontWeight: 500 }}>Hydration:</strong> 6 hours into nights. <span style={{ color: '#fbbf24', fontWeight: 500 }}>Avoid caffeine</span> for the next 3 hours. Drink 500ml of water before you leave the building.</> },
-                { icon: '⚡', content: <><strong style={{ color: '#f3f4f6', fontWeight: 500 }}>Focus:</strong> Night 3 is when fatigue peaks. <span style={{ color: '#2dd4bf', fontWeight: 500 }}>One thing only</span> — sleep well today. Everything else can wait.</> },
-              ].map((line, i, arr) => (
-                <div key={i} style={{
-                  display: 'flex', gap: 12, padding: '12px 0',
-                  borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none'
-                }}>
-                  <span style={{ fontSize: 18, flexShrink: 0, marginTop: 2 }}>{line.icon}</span>
-                  <p style={{ fontSize: 14, color: '#d1d5db', lineHeight: 1.65 }}>{line.content}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Builder note */}
           <div className="fade-up-4" style={{
             background: 'linear-gradient(135deg, rgba(245,158,11,0.06), rgba(45,212,191,0.06))',
@@ -265,6 +229,15 @@ export default function Landing() {
               <strong style={{ color: '#f3f4f6', fontWeight: 500, fontStyle: 'normal' }}>"I'm a mechanical engineer on a 4-week rotating shift pattern.</strong> I've spent years trying to use apps that have no idea what my life looks like. So I built ShiftWell — the app I always wished existed."
             </p>
             <div style={{ marginTop: 16, fontSize: 13, color: '#9ca3af' }}>— Jonny, Founder & fellow shift worker 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+          </div>
+
+          <Divider label="Try it yourself" />
+
+          <div className="fade-up-5" style={{ marginBottom: 64 }}>
+            <p style={{ textAlign: 'center', fontSize: 14, color: '#9ca3af', marginBottom: 24, fontWeight: 300 }}>
+              Pick your shift and explore the app — no sign up needed.
+            </p>
+            <ShiftWellDemo />
           </div>
 
           <Divider label="Pricing" />

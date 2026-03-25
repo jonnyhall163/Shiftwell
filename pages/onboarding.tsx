@@ -3,13 +3,33 @@ import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import type { ShiftDefinition, FixedPatternData, NightsPatternData } from '../lib/shiftEngine'
 
-type Step = 'type' | 'configure' | 'rotation' | 'life' | 'done'
+type Step = 'type' | 'configure' | 'rotation' | 'life'
 
-const DEFAULT_SHIFTS: ShiftDefinition[] = [
-  { label: 'Early', startTime: '06:00', endTime: '14:00', isOff: false },
-  { label: 'Late',  startTime: '14:00', endTime: '22:00', isOff: false },
-  { label: 'Night', startTime: '22:00', endTime: '06:00', isOff: false },
-  { label: 'Off',   startTime: '',      endTime: '',      isOff: true  },
+const PRESET_SHIFTS: Record<string, ShiftDefinition[]> = {
+  rotating: [
+    { label: 'Early', startTime: '06:00', endTime: '14:00', isOff: false },
+    { label: 'Late',  startTime: '14:00', endTime: '22:00', isOff: false },
+    { label: 'Night', startTime: '22:00', endTime: '06:00', isOff: false },
+    { label: 'Off',   startTime: '',      endTime: '',      isOff: true  },
+  ],
+  days: [
+    { label: 'Day', startTime: '07:00', endTime: '15:00', isOff: false },
+    { label: 'Off', startTime: '',      endTime: '',      isOff: true  },
+  ],
+  custom: [
+    { label: 'Shift', startTime: '08:00', endTime: '16:00', isOff: false },
+    { label: 'Off',   startTime: '',      endTime: '',      isOff: true  },
+  ],
+}
+
+const SHIFT_COLOURS = ['bg-teal-400','bg-amber-400','bg-indigo-400','bg-gray-400','bg-pink-400','bg-green-400']
+const SHIFT_BG_COLOURS = [
+  'bg-teal-900/60 border-teal-700/30',
+  'bg-amber-900/60 border-amber-700/30',
+  'bg-indigo-900/60 border-indigo-700/30',
+  'bg-gray-800/60 border-gray-700/30',
+  'bg-pink-900/60 border-pink-700/30',
+  'bg-green-900/60 border-green-700/30',
 ]
 
 export default function Onboarding() {
@@ -18,17 +38,14 @@ export default function Onboarding() {
   const [patternType, setPatternType] = useState<'fixed' | 'nights' | null>(null)
   const [saving, setSaving] = useState(false)
 
-  // Fixed pattern state
-  const [shifts, setShifts] = useState<ShiftDefinition[]>(DEFAULT_SHIFTS)
+  const [shifts, setShifts] = useState<ShiftDefinition[]>(PRESET_SHIFTS.rotating)
   const [cycleLength, setCycleLength] = useState(28)
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [rotation, setRotation] = useState<number[]>([])
+  const [rotation, setRotation] = useState<number[]>(Array(28).fill(0))
 
-  // Nights state
   const [nightStart, setNightStart] = useState('22:00')
   const [nightEnd, setNightEnd] = useState('06:00')
 
-  // Life context state
   const [hasKids, setHasKids] = useState(false)
   const [schoolRunTime, setSchoolRunTime] = useState('08:00')
   const [wakeConstraint, setWakeConstraint] = useState('')
@@ -52,7 +69,7 @@ export default function Onboarding() {
     if (shifts.length <= 1) return
     const updated = shifts.filter((_, i) => i !== index)
     setShifts(updated)
-    setRotation(rotation.map(r => r >= updated.length ? 0 : r))
+    setRotation(rotation.map(r => (r >= updated.length ? 0 : r)))
   }
 
   const handleSave = async () => {
@@ -93,12 +110,7 @@ export default function Onboarding() {
         .select('stripe_customer_id')
         .eq('id', user.id)
         .single()
-
-      if (updatedProfile?.stripe_customer_id) {
-        router.push('/dashboard')
-      } else {
-        router.push('/subscribe')
-      }
+      router.push(updatedProfile?.stripe_customer_id ? '/dashboard' : '/subscribe')
     } else {
       alert('Something went wrong. Please try again.')
       setSaving(false)
@@ -106,15 +118,20 @@ export default function Onboarding() {
   }
 
   const progressSteps: Step[] = ['type', 'configure', 'rotation', 'life']
+  const currentStepIndex = progressSteps.indexOf(step)
 
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-10">
       <div className="max-w-lg mx-auto">
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold text-white">Set up ShiftWell</h1>
-          <p className="text-gray-400 text-sm mt-2">Takes about 2 minutes</p>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="w-2 h-2 rounded-full bg-teal-400" style={{ boxShadow: '0 0 6px #2dd4bf' }} />
+            <span className="text-white font-bold text-lg">ShiftWell</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Let's set you up</h1>
+          <p className="text-gray-400 text-sm mt-1">Takes about 2 minutes</p>
         </div>
 
         {/* Progress */}
@@ -122,33 +139,50 @@ export default function Onboarding() {
           {progressSteps.map((s, i) => (
             <div
               key={s}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                step === s ? 'bg-teal-500' :
-                progressSteps.indexOf(step) > i ? 'bg-teal-800' : 'bg-gray-800'
+              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                i < currentStepIndex ? 'bg-teal-600' :
+                i === currentStepIndex ? 'bg-teal-400' : 'bg-gray-800'
               }`}
             />
           ))}
         </div>
 
-        {/* ── STEP 1: Type ── */}
+        {/* ── STEP 1: Pattern type ── */}
         {step === 'type' && (
           <div className="space-y-4">
-            <h2 className="text-white font-semibold text-lg mb-6">What best describes your shift pattern?</h2>
+            <h2 className="text-white font-semibold text-lg mb-2">What's your shift pattern?</h2>
+            <p className="text-gray-400 text-sm mb-6">Pick the one that fits — you can fine-tune it next.</p>
             {[
-              { type: 'fixed' as const, title: 'Fixed rotation', desc: 'A repeating cycle — e.g. 4 weeks of Early / Late / Night / Off', icon: '🔄' },
-              { type: 'nights' as const, title: 'Nights only', desc: 'You work permanent night shifts', icon: '🌙' },
+              { id: 'rotating', patternType: 'fixed' as const, icon: '🔄', title: 'Rotating shifts', desc: 'Early, Late, Night and Days off in a repeating cycle', popular: true },
+              { id: 'nights',   patternType: 'nights' as const, icon: '🌙', title: 'Nights only',     desc: 'You work permanent night shifts', popular: false },
+              { id: 'days',     patternType: 'fixed' as const, icon: '☀️', title: 'Days only',        desc: 'Standard day shifts in a repeating pattern', popular: false },
+              { id: 'custom',   patternType: 'fixed' as const, icon: '⚙️', title: 'Custom',           desc: 'Build your own shift pattern from scratch', popular: false },
             ].map(option => (
               <button
-                key={option.type}
-                onClick={() => { setPatternType(option.type); setStep('configure') }}
-                className="w-full bg-gray-900 border border-gray-800 hover:border-teal-500 rounded-2xl p-5 text-left transition-colors"
+                key={option.id}
+                onClick={() => {
+                  setPatternType(option.patternType)
+                  if (option.id !== 'nights') {
+                    setShifts(PRESET_SHIFTS[option.id] || PRESET_SHIFTS.custom)
+                  }
+                  setStep('configure')
+                }}
+                className="w-full bg-gray-900 border border-gray-800 hover:border-teal-500 rounded-2xl p-5 text-left transition-all"
               >
                 <div className="flex items-center gap-4">
                   <span className="text-3xl">{option.icon}</span>
-                  <div>
-                    <p className="text-white font-semibold">{option.title}</p>
-                    <p className="text-gray-400 text-sm mt-1">{option.desc}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-white font-semibold">{option.title}</p>
+                      {option.popular && (
+                        <span className="text-[10px] bg-teal-900/60 text-teal-400 border border-teal-700/40 px-2 py-0.5 rounded-full font-medium">
+                          Most common
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-400 text-sm mt-0.5">{option.desc}</p>
                   </div>
+                  <span className="text-gray-600 text-lg">›</span>
                 </div>
               </button>
             ))}
@@ -158,39 +192,24 @@ export default function Onboarding() {
         {/* ── STEP 2: Configure Fixed ── */}
         {step === 'configure' && patternType === 'fixed' && (
           <div className="space-y-6">
-            <h2 className="text-white font-semibold text-lg">Define your shift types</h2>
-
-            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-              <label className="block text-sm text-gray-400 mb-3">Cycle length (days)</label>
-              <div className="flex gap-3 flex-wrap">
-                {[7, 14, 21, 28, 35, 42].map(len => (
-                  <button
-                    key={len}
-                    onClick={() => setCycleLength(len)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      cycleLength === len ? 'bg-teal-500 text-gray-950' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                    }`}
-                  >
-                    {len}
-                  </button>
-                ))}
-              </div>
+            <div>
+              <h2 className="text-white font-semibold text-lg">Your shift types</h2>
+              <p className="text-gray-400 text-sm mt-1">Check the times look right — edit if needed</p>
             </div>
 
-            <div className="space-y-3">
-              <p className="text-sm text-gray-400">Your shift types</p>
+            <div>
               {shifts.map((shift, i) => (
-                <div key={i} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                <div key={i} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-3">
+                  <div className="flex items-center justify-between mb-4">
                     <input
                       type="text"
                       value={shift.label}
                       onChange={e => updateShift(i, 'label', e.target.value)}
-                      className="bg-gray-800 text-white rounded-lg px-3 py-2 text-sm w-32 outline-none focus:ring-2 focus:ring-teal-500"
+                      className="bg-gray-800 text-white rounded-lg px-3 py-2 text-sm w-28 outline-none focus:ring-2 focus:ring-teal-500"
                       placeholder="Label"
                     />
                     <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-2 text-sm text-gray-400">
+                      <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={shift.isOff}
@@ -207,23 +226,23 @@ export default function Onboarding() {
                     </div>
                   </div>
                   {!shift.isOff && (
-                    <div className="flex gap-3 items-center">
-                      <div className="flex-1">
-                        <label className="block text-xs text-gray-500 mb-1">Start</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gray-800 rounded-xl p-3">
+                        <label className="block text-xs text-gray-500 mb-2">Start</label>
                         <input
                           type="time"
                           value={shift.startTime}
                           onChange={e => updateShift(i, 'startTime', e.target.value)}
-                          className="bg-gray-800 text-white rounded-lg px-3 py-2 text-sm w-full outline-none focus:ring-2 focus:ring-teal-500"
+                          className="bg-transparent text-white text-sm w-full outline-none"
                         />
                       </div>
-                      <div className="flex-1">
-                        <label className="block text-xs text-gray-500 mb-1">End</label>
+                      <div className="bg-gray-800 rounded-xl p-3">
+                        <label className="block text-xs text-gray-500 mb-2">End</label>
                         <input
                           type="time"
                           value={shift.endTime}
                           onChange={e => updateShift(i, 'endTime', e.target.value)}
-                          className="bg-gray-800 text-white rounded-lg px-3 py-2 text-sm w-full outline-none focus:ring-2 focus:ring-teal-500"
+                          className="bg-transparent text-white text-sm w-full outline-none"
                         />
                       </div>
                     </div>
@@ -238,22 +257,39 @@ export default function Onboarding() {
               </button>
             </div>
 
+            {/* Cycle length */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-              <label className="block text-sm text-gray-400 mb-3">When did your current cycle start?</label>
+              <label className="block text-sm text-gray-400 mb-3">How long is your cycle? (days)</label>
+              <div className="flex gap-2 flex-wrap">
+                {[7, 14, 21, 28, 35, 42].map(len => (
+                  <button
+                    key={len}
+                    onClick={() => setCycleLength(len)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      cycleLength === len ? 'bg-teal-500 text-gray-950' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    {len}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Start date */}
+            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+              <label className="block text-sm text-gray-400 mb-1">When did your current cycle start?</label>
+              <p className="text-xs text-gray-600 mb-3">Not sure? Pick the Monday your current block started</p>
               <input
                 type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
                 className="bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
               />
-              <p className="text-xs text-gray-600 mt-2">
-                This is day 1 of your rotation. If unsure, pick the Monday your current cycle started.
-              </p>
             </div>
 
             <button
               onClick={() => setStep('rotation')}
-              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-lg transition"
+              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
               Next — Map your rotation →
             </button>
@@ -263,8 +299,11 @@ export default function Onboarding() {
         {/* ── STEP 2: Configure Nights ── */}
         {step === 'configure' && patternType === 'nights' && (
           <div className="space-y-6">
-            <h2 className="text-white font-semibold text-lg">Your night shift times</h2>
-            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-4">
+            <div>
+              <h2 className="text-white font-semibold text-lg">Your night shift times</h2>
+              <p className="text-gray-400 text-sm mt-1">When does your shift typically run?</p>
+            </div>
+            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-5">
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Shift starts</label>
                 <input
@@ -286,7 +325,7 @@ export default function Onboarding() {
             </div>
             <button
               onClick={() => setStep('life')}
-              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-lg transition"
+              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
               Next →
             </button>
@@ -298,7 +337,7 @@ export default function Onboarding() {
           <div className="space-y-6">
             <div>
               <h2 className="text-white font-semibold text-lg">Map your {cycleLength}-day rotation</h2>
-              <p className="text-gray-400 text-sm mt-1">Tap each day to set what shift you work</p>
+              <p className="text-gray-400 text-sm mt-1">Tap each day to cycle through your shift types</p>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -323,20 +362,18 @@ export default function Onboarding() {
                       updated[day] = next
                       setRotation(updated)
                     }}
-                    className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-colors border ${SHIFT_BG_COLOURS[shiftIndex % SHIFT_BG_COLOURS.length]}`}
+                    className={`aspect-square rounded-lg flex flex-col items-center justify-center transition-colors border ${SHIFT_BG_COLOURS[shiftIndex % SHIFT_BG_COLOURS.length]}`}
                   >
                     <span className="text-gray-500 text-[9px]">{day + 1}</span>
-                    <span className="text-white text-[10px] leading-tight">{shift?.label?.slice(0, 3)}</span>
+                    <span className="text-white text-[10px] leading-tight font-medium">{shift?.label?.slice(0, 3)}</span>
                   </button>
                 )
               })}
             </div>
 
-            <p className="text-xs text-gray-600 text-center">Tap a day to cycle through your shift types</p>
-
             <button
               onClick={() => setStep('life')}
-              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-lg transition"
+              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
               Next — A bit about your life →
             </button>
@@ -349,11 +386,10 @@ export default function Onboarding() {
             <div>
               <h2 className="text-white font-semibold text-lg">A bit about your life</h2>
               <p className="text-gray-400 text-sm mt-1">
-                This helps ShiftWell give you advice that actually fits your life — not just your shifts.
+                Helps ShiftWell give advice that fits your real life — not just your rota.
               </p>
             </div>
 
-            {/* Kids */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -362,12 +398,11 @@ export default function Onboarding() {
                 </div>
                 <button
                   onClick={() => setHasKids(!hasKids)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${hasKids ? 'bg-teal-500' : 'bg-gray-700'}`}
+                  className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${hasKids ? 'bg-teal-500' : 'bg-gray-700'}`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${hasKids ? 'left-6' : 'left-0.5'}`} />
                 </button>
               </div>
-
               {hasKids && (
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">School run / earliest you need to be up</label>
@@ -381,11 +416,8 @@ export default function Onboarding() {
               )}
             </div>
 
-            {/* Wake constraint */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-              <label className="block text-sm text-gray-400 mb-1">
-                Earliest you can sleep in until (on days off)
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Latest you can sleep in on days off</label>
               <p className="text-gray-600 text-xs mb-3">Leave blank if no constraint</p>
               <input
                 type="time"
@@ -395,7 +427,6 @@ export default function Onboarding() {
               />
             </div>
 
-            {/* Life notes */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
               <label className="block text-sm text-gray-400 mb-1">Anything else we should know?</label>
               <p className="text-gray-600 text-xs mb-3">e.g. "I care for an elderly parent", "I train for marathons"</p>
@@ -411,20 +442,20 @@ export default function Onboarding() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-lg transition disabled:opacity-50"
+              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition disabled:opacity-50"
             >
               {saving ? 'Saving...' : "Let's go →"}
             </button>
           </div>
         )}
 
-        {/* Back button */}
+        {/* Back */}
         {step !== 'type' && (
           <button
             onClick={() => {
               if (step === 'configure') setStep('type')
-              if (step === 'rotation') setStep('configure')
-              if (step === 'life') setStep(patternType === 'fixed' ? 'rotation' : 'configure')
+              else if (step === 'rotation') setStep('configure')
+              else if (step === 'life') setStep(patternType === 'fixed' ? 'rotation' : 'configure')
             }}
             className="w-full mt-4 text-gray-500 hover:text-gray-300 text-sm py-2 transition-colors"
           >
@@ -436,13 +467,3 @@ export default function Onboarding() {
     </div>
   )
 }
-
-const SHIFT_COLOURS = ['bg-teal-400', 'bg-amber-400', 'bg-indigo-400', 'bg-gray-400', 'bg-pink-400', 'bg-green-400']
-const SHIFT_BG_COLOURS = [
-  'bg-teal-900/60 border-teal-700/30',
-  'bg-amber-900/60 border-amber-700/30',
-  'bg-indigo-900/60 border-indigo-700/30',
-  'bg-gray-800/60 border-gray-700/30',
-  'bg-pink-900/60 border-pink-700/30',
-  'bg-green-900/60 border-green-700/30',
-]
