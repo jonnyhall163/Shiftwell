@@ -336,6 +336,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
 // ── SLEEP ────────────────────────────────────────────────
 function SleepView({ user }: { user: User }) {
   const [logs, setLogs] = useState<any[]>([])
+  const [weekLogs, setWeekLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [sleepStart, setSleepStart] = useState('')
@@ -351,6 +352,20 @@ function SleepView({ user }: { user: User }) {
       .order('sleep_start', { ascending: false })
       .limit(10)
     setLogs(data || [])
+
+    // Fetch last 7 days for graph
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+    sevenDaysAgo.setHours(0, 0, 0, 0)
+
+    const { data: weekData } = await supabase
+      .from('shiftwell_sleep')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('sleep_start', sevenDaysAgo.toISOString())
+      .order('sleep_start', { ascending: true })
+
+    setWeekLogs(weekData || [])
     setLoading(false)
   }
 
@@ -359,7 +374,6 @@ function SleepView({ user }: { user: User }) {
   const handleSave = async () => {
     if (!sleepStart || !sleepEnd) return
     setSaving(true)
-
     const { error } = await supabase
       .from('shiftwell_sleep')
       .insert({
@@ -368,7 +382,6 @@ function SleepView({ user }: { user: User }) {
         sleep_end: new Date(sleepEnd).toISOString(),
         notes: notes || null,
       })
-
     if (!error) {
       setShowForm(false)
       setSleepStart('')
@@ -390,17 +403,37 @@ function SleepView({ user }: { user: User }) {
     return m > 0 ? `${h}h ${m}m` : `${h}h`
   }
 
-  const formatTime = (iso: string) => {
-    return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-  }
+  const formatTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
-  const formatDate = (iso: string) => {
-    return new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-  }
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
   const totalToday = logs
     .filter(l => new Date(l.sleep_start).toDateString() === new Date().toDateString())
     .reduce((sum, l) => sum + (l.duration_minutes || 0), 0)
+
+  // Build 7-day graph data
+  const last7Days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    const dateStr = d.toDateString()
+    const dayLogs = weekLogs.filter(l => new Date(l.sleep_start).toDateString() === dateStr)
+    const totalMins = dayLogs.reduce((sum, l) => sum + (l.duration_minutes || 0), 0)
+    const hours = totalMins / 60
+    const label = d.toLocaleDateString('en-GB', { weekday: 'short' })
+    const isToday = dateStr === new Date().toDateString()
+    return { label, hours, isToday }
+  })
+
+  const maxHours = Math.max(...last7Days.map(d => d.hours), 8)
+
+  const barColor = (hours: number) => {
+    if (hours === 0) return '#1f2937'
+    if (hours >= 7) return '#2dd4bf'
+    if (hours >= 5) return '#fbbf24'
+    return '#f87171'
+  }
 
   return (
     <div className="space-y-4 max-w-lg mx-auto">
@@ -423,11 +456,56 @@ function SleepView({ user }: { user: User }) {
         <p className="text-gray-600 text-xs mt-1">Log any sleep window — naps count too</p>
       </div>
 
+      {/* 7-day sleep graph */}
+      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+        <p className="text-white font-semibold text-sm mb-4">Last 7 days</p>
+        <div className="flex items-flex-end gap-2" style={{ alignItems: 'flex-end', height: 80 }}>
+          {last7Days.map((day, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <span className="text-xs text-gray-600" style={{ fontSize: 9 }}>
+                {day.hours > 0 ? `${Math.round(day.hours * 10) / 10}h` : ''}
+              </span>
+              <div
+                style={{
+                  width: '100%',
+                  height: day.hours > 0 ? `${Math.max((day.hours / maxHours) * 56, 4)}px` : '4px',
+                  background: barColor(day.hours),
+                  borderRadius: '4px 4px 0 0',
+                  opacity: day.isToday ? 1 : 0.7,
+                  transition: 'height 0.3s ease',
+                  border: day.isToday ? '1px solid rgba(45,212,191,0.4)' : 'none',
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        {/* Day labels */}
+        <div className="flex gap-2 mt-2">
+          {last7Days.map((day, i) => (
+            <div key={i} className="flex-1 text-center" style={{ fontSize: 10, color: day.isToday ? '#2dd4bf' : '#6b7280' }}>
+              {day.label}
+            </div>
+          ))}
+        </div>
+        {/* Legend */}
+        <div className="flex gap-4 mt-3 justify-center">
+          {[
+            { color: '#2dd4bf', label: '7h+' },
+            { color: '#fbbf24', label: '5–7h' },
+            { color: '#f87171', label: '<5h' },
+          ].map(item => (
+            <div key={item.label} className="flex items-center gap-1.5">
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: item.color }} />
+              <span style={{ fontSize: 10, color: '#6b7280' }}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Log form */}
       {showForm && (
         <div className="bg-gray-900 rounded-2xl p-5 border border-teal-700/30 space-y-4">
           <p className="text-white font-semibold text-sm">Log a sleep window</p>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Fell asleep</label>
@@ -448,7 +526,6 @@ function SleepView({ user }: { user: User }) {
               />
             </div>
           </div>
-
           <div>
             <label className="block text-xs text-gray-500 mb-1">Notes (optional)</label>
             <input
@@ -459,7 +536,6 @@ function SleepView({ user }: { user: User }) {
               placeholder="e.g. woke up twice, felt rested..."
             />
           </div>
-
           <div className="flex gap-3">
             <button
               onClick={handleSave}
