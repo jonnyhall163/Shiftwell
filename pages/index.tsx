@@ -349,6 +349,9 @@ export default function Landing() {
                 <span key={i} style={{ fontSize: 12, color: '#6b7280' }}>{item}</span>
               ))}
             </div>
+            <p style={{ textAlign: 'center', fontSize: 12, color: '#475569', marginTop: 12 }}>
+              Prices shown in GBP · Charged in your local currency at checkout
+            </p>
           </div>
 
           {/* Footer CTA */}
