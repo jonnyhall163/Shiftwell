@@ -563,22 +563,22 @@ function SleepView({ user }: { user: User }) {
 
           {/* Datetime inputs — stacked to avoid overlap */}
           <div className="flex flex-col gap-3">
-            <div>
+            <div className="bg-gray-800 rounded-lg px-3 py-2">
               <label className="block text-xs text-gray-500 mb-1">Fell asleep</label>
               <input
                 type="datetime-local"
                 value={sleepStart}
                 onChange={e => setSleepStart(e.target.value)}
-                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                style={{ width: '100%', background: 'transparent', color: 'white', border: 'none', outline: 'none', fontSize: 14 }}
               />
             </div>
-            <div>
+            <div className="bg-gray-800 rounded-lg px-3 py-2">
               <label className="block text-xs text-gray-500 mb-1">Woke up</label>
               <input
                 type="datetime-local"
                 value={sleepEnd}
                 onChange={e => setSleepEnd(e.target.value)}
-                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                style={{ width: '100%', background: 'transparent', color: 'white', border: 'none', outline: 'none', fontSize: 14 }}
               />
             </div>
           </div>
