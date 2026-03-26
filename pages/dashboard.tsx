@@ -348,6 +348,7 @@ function SleepView({ user }: { user: User }) {
   const [sleepStart, setSleepStart] = useState('')
   const [sleepEnd, setSleepEnd] = useState('')
   const [notes, setNotes] = useState('')
+  const [sleepType, setSleepType] = useState<'main' | 'nap'>('main')
   const [saving, setSaving] = useState(false)
 
   const fetchLogs = async () => {
@@ -359,7 +360,6 @@ function SleepView({ user }: { user: User }) {
       .limit(10)
     setLogs(data || [])
 
-    // Fetch last 7 days for graph
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
     sevenDaysAgo.setHours(0, 0, 0, 0)
@@ -387,12 +387,14 @@ function SleepView({ user }: { user: User }) {
         sleep_start: new Date(sleepStart).toISOString(),
         sleep_end: new Date(sleepEnd).toISOString(),
         notes: notes || null,
+        sleep_type: sleepType,
       })
     if (!error) {
       setShowForm(false)
       setSleepStart('')
       setSleepEnd('')
       setNotes('')
+      setSleepType('main')
       fetchLogs()
     }
     setSaving(false)
@@ -416,20 +418,31 @@ function SleepView({ user }: { user: User }) {
     new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
   const totalToday = logs
-    .filter(l => new Date(l.sleep_start).toDateString() === new Date().toDateString())
+    .filter(l => new Date(l.sleep_end).toDateString() === new Date().toDateString())
     .reduce((sum, l) => sum + (l.duration_minutes || 0), 0)
 
-  // Build 7-day graph data
+  // Build 7-day graph — keyed by WAKE UP day, main sleep only for bar height
   const last7Days = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
     const dateStr = d.toDateString()
-    const dayLogs = weekLogs.filter(l => new Date(l.sleep_start).toDateString() === dateStr)
-    const totalMins = dayLogs.reduce((sum, l) => sum + (l.duration_minutes || 0), 0)
-    const hours = totalMins / 60
+
+    // Filter by wake-up day (sleep_end)
+    const dayLogs = weekLogs.filter(l => new Date(l.sleep_end).toDateString() === dateStr)
+
+    // Main sleep = longest window OR type === 'main'
+    const mainLogs = dayLogs.filter(l => l.sleep_type === 'main' || !l.sleep_type)
+    const napLogs = dayLogs.filter(l => l.sleep_type === 'nap')
+
+    // Use longest main sleep for bar
+    const mainMins = mainLogs.length > 0
+      ? Math.max(...mainLogs.map(l => l.duration_minutes || 0))
+      : 0
+    const hours = mainMins / 60
+    const hasNap = napLogs.length > 0
     const label = d.toLocaleDateString('en-GB', { weekday: 'short' })
     const isToday = dateStr === new Date().toDateString()
-    return { label, hours, isToday }
+    return { label, hours, isToday, hasNap }
   })
 
   const maxHours = Math.max(...last7Days.map(d => d.hours), 8)
@@ -464,27 +477,40 @@ function SleepView({ user }: { user: User }) {
 
       {/* 7-day sleep graph */}
       <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-        <p className="text-white font-semibold text-sm mb-4">Last 7 days</p>
-        <div className="flex items-flex-end gap-2" style={{ alignItems: 'flex-end', height: 80 }}>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-white font-semibold text-sm">Last 7 days</p>
+          <p className="text-gray-600 text-xs">Main sleep by wake-up day</p>
+        </div>
+        <div className="flex gap-2" style={{ alignItems: 'flex-end', height: 80 }}>
           {last7Days.map((day, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-xs text-gray-600" style={{ fontSize: 9 }}>
+            <div key={i} className="flex-1 flex flex-col items-center gap-1" style={{ position: 'relative' }}>
+              <span style={{ fontSize: 9, color: '#6b7280', height: 12 }}>
                 {day.hours > 0 ? `${Math.round(day.hours * 10) / 10}h` : ''}
               </span>
-              <div
-                style={{
+              <div style={{ position: 'relative', width: '100%' }}>
+                {/* Nap dot */}
+                {day.hasNap && (
+                  <div style={{
+                    position: 'absolute', top: -5, right: 1,
+                    width: 7, height: 7, borderRadius: '50%',
+                    background: '#fbbf24', border: '1px solid #090c14',
+                    zIndex: 2,
+                  }} />
+                )}
+                <div style={{
                   width: '100%',
                   height: day.hours > 0 ? `${Math.max((day.hours / maxHours) * 56, 4)}px` : '4px',
                   background: barColor(day.hours),
                   borderRadius: '4px 4px 0 0',
-                  opacity: day.isToday ? 1 : 0.7,
+                  opacity: day.isToday ? 1 : 0.8,
                   transition: 'height 0.3s ease',
                   border: day.isToday ? '1px solid rgba(45,212,191,0.4)' : 'none',
-                }}
-              />
+                }} />
+              </div>
             </div>
           ))}
         </div>
+
         {/* Day labels */}
         <div className="flex gap-2 mt-2">
           {last7Days.map((day, i) => (
@@ -493,8 +519,9 @@ function SleepView({ user }: { user: User }) {
             </div>
           ))}
         </div>
+
         {/* Legend */}
-        <div className="flex gap-4 mt-3 justify-center">
+        <div className="flex gap-3 mt-3 justify-center flex-wrap">
           {[
             { color: '#2dd4bf', label: '7h+' },
             { color: '#fbbf24', label: '5–7h' },
@@ -505,6 +532,10 @@ function SleepView({ user }: { user: User }) {
               <span style={{ fontSize: 10, color: '#6b7280' }}>{item.label}</span>
             </div>
           ))}
+          <div className="flex items-center gap-1.5">
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#fbbf24' }} />
+            <span style={{ fontSize: 10, color: '#6b7280' }}>+ nap</span>
+          </div>
         </div>
       </div>
 
@@ -512,7 +543,26 @@ function SleepView({ user }: { user: User }) {
       {showForm && (
         <div className="bg-gray-900 rounded-2xl p-5 border border-teal-700/30 space-y-4">
           <p className="text-white font-semibold text-sm">Log a sleep window</p>
-          <div className="grid grid-cols-2 gap-3">
+
+          {/* Sleep type toggle */}
+          <div className="flex gap-2 p-1 bg-gray-800 rounded-xl">
+            {(['main', 'nap'] as const).map(type => (
+              <button
+                key={type}
+                onClick={() => setSleepType(type)}
+                className="flex-1 py-2 rounded-lg text-sm font-semibold transition"
+                style={{
+                  background: sleepType === type ? '#2dd4bf' : 'transparent',
+                  color: sleepType === type ? '#090c14' : '#9ca3af',
+                }}
+              >
+                {type === 'main' ? '🌙 Main sleep' : '💤 Nap'}
+              </button>
+            ))}
+          </div>
+
+          {/* Datetime inputs — stacked to avoid overlap */}
+          <div className="flex flex-col gap-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Fell asleep</label>
               <input
@@ -532,6 +582,7 @@ function SleepView({ user }: { user: User }) {
               />
             </div>
           </div>
+
           <div>
             <label className="block text-xs text-gray-500 mb-1">Notes (optional)</label>
             <input
@@ -542,6 +593,7 @@ function SleepView({ user }: { user: User }) {
               placeholder="e.g. woke up twice, felt rested..."
             />
           </div>
+
           <div className="flex gap-3">
             <button
               onClick={handleSave}
@@ -578,6 +630,9 @@ function SleepView({ user }: { user: User }) {
             <div key={log.id} className="bg-gray-900 rounded-2xl p-4 border border-gray-800 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
+                  <span className="text-base">
+                    {log.sleep_type === 'nap' ? '💤' : '🌙'}
+                  </span>
                   <span className="text-white font-semibold text-sm">
                     {formatDuration(log.duration_minutes)}
                   </span>
