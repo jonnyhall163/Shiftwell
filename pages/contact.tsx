@@ -9,20 +9,20 @@ export default function Contact() {
       <div style={{ background: '#1e293b', borderRadius: 12, padding: 32, marginBottom: 24 }}>
         <h2 style={{ color: '#f59e0b', marginTop: 0 }}>General enquiries</h2>
         <p>For anything about the app, your account, or feedback:</p>
-        <a href="mailto:hello@growviadigital.co.uk" style={{ color: '#2dd4bf', fontSize: 18, fontWeight: 'bold' }}>hello@growviadigital.co.uk</a>
+        <a href="mailto:hello@getshiftwell.com" style={{ color: '#2dd4bf', fontSize: 18, fontWeight: 'bold' }}>hello@getshiftwell.com</a>
       </div>
 
       <div style={{ background: '#1e293b', borderRadius: 12, padding: 32, marginBottom: 24 }}>
         <h2 style={{ color: '#f59e0b', marginTop: 0 }}>Billing & subscriptions</h2>
         <p>To manage, change or cancel your subscription, use the Customer Portal:</p>
         <a href="/api/customer-portal" style={{ display: 'inline-block', marginTop: 8, background: '#2dd4bf', color: '#0f172a', padding: '10px 20px', borderRadius: 8, fontWeight: 'bold', textDecoration: 'none' }}>Manage Subscription</a>
-        <p style={{ marginTop: 16 }}>Or email us at <a href="mailto:hello@growviadigital.co.uk" style={{ color: '#2dd4bf' }}>hello@growviadigital.co.uk</a></p>
+        <p style={{ marginTop: 16 }}>Or email us at <a href="mailto:hello@getshiftwell.com" style={{ color: '#2dd4bf' }}>hello@getshiftwell.com</a></p>
       </div>
 
       <div style={{ background: '#1e293b', borderRadius: 12, padding: 32, marginBottom: 24 }}>
         <h2 style={{ color: '#f59e0b', marginTop: 0 }}>Privacy & data requests</h2>
         <p>To request access to, correction of, or deletion of your data under GDPR:</p>
-        <a href="mailto:hello@growviadigital.co.uk" style={{ color: '#2dd4bf' }}>hello@growviadigital.co.uk</a>
+        <a href="mailto:hello@getshiftwell.com" style={{ color: '#2dd4bf' }}>hello@getshiftwell.com</a>
         <p style={{ marginTop: 8, color: '#94a3b8', fontSize: 14 }}>We respond to all data requests within 30 days.</p>
       </div>
 
@@ -31,7 +31,7 @@ export default function Contact() {
         <p style={{ margin: '4px 0' }}>Growvia Digital Ltd</p>
         <p style={{ margin: '4px 0' }}>Glasgow, Scotland, UK</p>
         <p style={{ margin: '4px 0' }}>
-          <a href="mailto:hello@growviadigital.co.uk" style={{ color: '#2dd4bf' }}>hello@growviadigital.co.uk</a>
+          <a href="mailto:hello@getshiftwell.com" style={{ color: '#2dd4bf' }}>hello@getshiftwell.com</a>
         </p>
       </div>
 

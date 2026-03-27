@@ -7,7 +7,7 @@ export default function Privacy() {
       <p style={{ color: '#94a3b8', marginBottom: 32 }}>Last updated: March 2026</p>
 
       <h2 style={{ color: '#f59e0b' }}>Who we are</h2>
-      <p>ShiftWell is operated by Growvia Digital Ltd. If you have any questions about this policy, contact us at <a href="mailto:hello@growviadigital.co.uk" style={{ color: '#2dd4bf' }}>hello@growviadigital.co.uk</a>.</p>
+      <p>ShiftWell is operated by Growvia Digital Ltd. If you have any questions about this policy, contact us at <a href="mailto:hello@getshiftwell.com" style={{ color: '#2dd4bf' }}>hello@getshiftwell.com</a>.</p>
 
       <h2 style={{ color: '#f59e0b' }}>What data we collect</h2>
       <ul>
@@ -47,7 +47,7 @@ export default function Privacy() {
         <li>Export your data</li>
         <li>Withdraw consent at any time</li>
       </ul>
-      <p>To exercise any of these rights, email <a href="mailto:hello@growviadigital.co.uk" style={{ color: '#2dd4bf' }}>hello@growviadigital.co.uk</a>.</p>
+      <p>To exercise any of these rights, email <a href="mailto:hello@getshiftwell.com" style={{ color: '#2dd4bf' }}>hello@getshiftwell.com</a>.</p>
 
       <h2 style={{ color: '#f59e0b' }}>Data retention</h2>
       <p>We retain your data for as long as your account is active. If you delete your account, your personal data is removed within 30 days.</p>
@@ -58,7 +58,7 @@ export default function Privacy() {
       <h2 style={{ color: '#f59e0b' }}>Changes to this policy</h2>
       <p>We may update this policy occasionally. We'll notify you by email if any significant changes are made.</p>
 
-      <p style={{ marginTop: 48, color: '#64748b', fontSize: 14 }}>Growvia Digital Ltd · hello@growviadigital.co.uk</p>
+      <p style={{ marginTop: 48, color: '#64748b', fontSize: 14 }}>Growvia Digital Ltd · hello@getshiftwell.com</p>
     </div>
   )
 }
