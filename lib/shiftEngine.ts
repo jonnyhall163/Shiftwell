@@ -1,6 +1,6 @@
 // ── Types ────────────────────────────────────────────────
 
-export type ShiftType = 'fixed' | 'nights'
+export type ShiftType = 'fixed' | 'nights' | 'variable'
 
 export interface ShiftDefinition {
   label: string        // e.g. "Early", "Late", "Night", "Off"
@@ -23,7 +23,18 @@ export interface NightsPatternData {
   startTime: string             // when nights started e.g. "2024-01-01"
 }
 
-export type PatternData = FixedPatternData | NightsPatternData
+export interface VariablePatternData {
+  type: 'variable'
+  schedule: {
+    date: string       // ISO date e.g. "2026-03-30"
+    label: string      // e.g. "Early", "Night", "Off"
+    startTime: string  // e.g. "06:00"
+    endTime: string    // e.g. "14:00"
+    isOff: boolean
+  }[]
+}
+
+export type PatternData = FixedPatternData | NightsPatternData | VariablePatternData
 
 export interface TodayShift {
   label: string
@@ -38,6 +49,27 @@ export interface TodayShift {
 export function getTodayShift(patternData: PatternData): TodayShift {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const todayStr = today.toISOString().split('T')[0]
+
+  if (patternData.type === 'variable') {
+    const entry = patternData.schedule.find(s => s.date === todayStr)
+    if (entry) {
+      return {
+        label: entry.label,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        isOff: entry.isOff,
+        dayInCycle: null,
+      }
+    }
+    return {
+      label: 'No shift set',
+      startTime: '',
+      endTime: '',
+      isOff: false,
+      dayInCycle: null,
+    }
+  }
 
   if (patternData.type === 'nights') {
     return {
@@ -85,6 +117,29 @@ export function getUpcomingShifts(patternData: PatternData, days: number = 7): T
     const date = new Date()
     date.setHours(0, 0, 0, 0)
     date.setDate(date.getDate() + i)
+    const dateStr = date.toISOString().split('T')[0]
+
+    if (patternData.type === 'variable') {
+      const entry = patternData.schedule.find(s => s.date === dateStr)
+      if (entry) {
+        upcoming.push({
+          label: entry.label,
+          startTime: entry.startTime,
+          endTime: entry.endTime,
+          isOff: entry.isOff,
+          dayInCycle: null,
+        })
+      } else {
+        upcoming.push({
+          label: 'No shift set',
+          startTime: '',
+          endTime: '',
+          isOff: false,
+          dayInCycle: null,
+        })
+      }
+      continue
+    }
 
     if (patternData.type === 'nights') {
       upcoming.push({
