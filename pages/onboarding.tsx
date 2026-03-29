@@ -1,26 +1,16 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
-import type { ShiftDefinition, FixedPatternData, NightsPatternData } from '../lib/shiftEngine'
+import type { ShiftDefinition, FixedPatternData, NightsPatternData, VariablePatternData } from '../lib/shiftEngine'
 
-type Step = 'type' | 'configure' | 'rotation' | 'life'
+type Step = 'type' | 'configure' | 'rotation' | 'variable' | 'life'
 
-const PRESET_SHIFTS: Record<string, ShiftDefinition[]> = {
-  rotating: [
-    { label: 'Early', startTime: '06:00', endTime: '14:00', isOff: false },
-    { label: 'Late',  startTime: '14:00', endTime: '22:00', isOff: false },
-    { label: 'Night', startTime: '22:00', endTime: '06:00', isOff: false },
-    { label: 'Off',   startTime: '',      endTime: '',      isOff: true  },
-  ],
-  days: [
-    { label: 'Day', startTime: '07:00', endTime: '15:00', isOff: false },
-    { label: 'Off', startTime: '',      endTime: '',      isOff: true  },
-  ],
-  custom: [
-    { label: 'Shift', startTime: '08:00', endTime: '16:00', isOff: false },
-    { label: 'Off',   startTime: '',      endTime: '',      isOff: true  },
-  ],
-}
+const PRESET_SHIFTS: ShiftDefinition[] = [
+  { label: 'Early', startTime: '06:00', endTime: '14:00', isOff: false },
+  { label: 'Late',  startTime: '14:00', endTime: '22:00', isOff: false },
+  { label: 'Night', startTime: '22:00', endTime: '06:00', isOff: false },
+  { label: 'Off',   startTime: '',      endTime: '',      isOff: true  },
+]
 
 const SHIFT_COLOURS = ['bg-teal-400','bg-amber-400','bg-indigo-400','bg-gray-400','bg-pink-400','bg-green-400']
 const SHIFT_BG_COLOURS = [
@@ -32,20 +22,69 @@ const SHIFT_BG_COLOURS = [
   'bg-green-900/60 border-green-700/30',
 ]
 
+const VARIABLE_SHIFT_OPTIONS = [
+  { label: 'Early',  startTime: '06:00', endTime: '14:00', isOff: false, color: 'text-amber-400',  bg: 'bg-amber-900/40',  border: 'border-amber-700/40' },
+  { label: 'Late',   startTime: '14:00', endTime: '22:00', isOff: false, color: 'text-blue-400',   bg: 'bg-blue-900/40',   border: 'border-blue-700/40' },
+  { label: 'Night',  startTime: '22:00', endTime: '06:00', isOff: false, color: 'text-indigo-400', bg: 'bg-indigo-900/40', border: 'border-indigo-700/40' },
+  { label: 'Off',    startTime: '',      endTime: '',      isOff: true,  color: 'text-gray-400',   bg: 'bg-gray-800/40',   border: 'border-gray-700/40' },
+]
+
+type VariableDay = {
+  date: string
+  label: string
+  startTime: string
+  endTime: string
+  isOff: boolean
+}
+
+function generateDates(startDate: string, weeks: number): string[] {
+  const dates: string[] = []
+  const start = new Date(startDate + 'T12:00:00')
+  for (let i = 0; i < weeks * 7; i++) {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    dates.push(d.toISOString().split('T')[0])
+  }
+  return dates
+}
+
+function formatDisplayDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+function getWeekLabel(dates: string[], weekIndex: number): string {
+  const start = dates[weekIndex * 7]
+  const end = dates[weekIndex * 7 + 6]
+  const s = new Date(start + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  const e = new Date(end + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  return `${s} – ${e}`
+}
+
 export default function Onboarding() {
   const router = useRouter()
   const [step, setStep] = useState<Step>('type')
-  const [patternType, setPatternType] = useState<'fixed' | 'nights' | null>(null)
+  const [patternType, setPatternType] = useState<'fixed' | 'nights' | 'variable' | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const [shifts, setShifts] = useState<ShiftDefinition[]>(PRESET_SHIFTS.rotating)
+  // Fixed pattern state
+  const [shifts, setShifts] = useState<ShiftDefinition[]>(PRESET_SHIFTS)
   const [cycleLength, setCycleLength] = useState(28)
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0])
   const [rotation, setRotation] = useState<number[]>(Array(28).fill(0))
 
+  // Nights state
   const [nightStart, setNightStart] = useState('22:00')
   const [nightEnd, setNightEnd] = useState('06:00')
 
+  // Variable schedule state
+  const [variableWeeks, setVariableWeeks] = useState(2)
+  const [variableStartDate, setVariableStartDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [variableSchedule, setVariableSchedule] = useState<Record<string, VariableDay>>({})
+  const [activeWeek, setActiveWeek] = useState(0)
+  const [editingDate, setEditingDate] = useState<string | null>(null)
+
+  // Life context
   const [hasKids, setHasKids] = useState(false)
   const [schoolRunTime, setSchoolRunTime] = useState('08:00')
   const [wakeConstraint, setWakeConstraint] = useState('')
@@ -72,20 +111,52 @@ export default function Onboarding() {
     setRotation(rotation.map(r => (r >= updated.length ? 0 : r)))
   }
 
+  const setVariableDay = (dateStr: string, option: typeof VARIABLE_SHIFT_OPTIONS[0]) => {
+    setVariableSchedule(prev => ({
+      ...prev,
+      [dateStr]: {
+        date: dateStr,
+        label: option.label,
+        startTime: option.startTime,
+        endTime: option.endTime,
+        isOff: option.isOff,
+      }
+    }))
+    if (option.isOff) setEditingDate(null)
+  }
+
+  const updateVariableTimes = (dateStr: string, start: string, end: string) => {
+    setVariableSchedule(prev => ({
+      ...prev,
+      [dateStr]: { ...prev[dateStr], startTime: start, endTime: end }
+    }))
+  }
+
+  const variableDates = generateDates(variableStartDate, variableWeeks)
+  const filledDays = variableDates.filter(d => variableSchedule[d]).length
+  const totalDays = variableDates.length
+
   const handleSave = async () => {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
-    let patternData: FixedPatternData | NightsPatternData
+    let patternData: FixedPatternData | NightsPatternData | VariablePatternData
 
     if (patternType === 'fixed') {
       patternData = { type: 'fixed', cycleLength, shifts, rotation, startDate }
-    } else {
+    } else if (patternType === 'nights') {
       patternData = {
         type: 'nights',
         shift: { label: 'Night', startTime: nightStart, endTime: nightEnd, isOff: false },
         startTime: nightStart,
+      }
+    } else {
+      patternData = {
+        type: 'variable',
+        schedule: variableDates.map(d => variableSchedule[d] || {
+          date: d, label: 'Off', startTime: '', endTime: '', isOff: true
+        })
       }
     }
 
@@ -153,19 +224,38 @@ export default function Onboarding() {
             <h2 className="text-white font-semibold text-lg mb-2">What's your shift pattern?</h2>
             <p className="text-gray-400 text-sm mb-6">Pick the one that fits — you can fine-tune it next.</p>
             {[
-              { id: 'rotating', patternType: 'fixed' as const, icon: '🔄', title: 'Rotating shifts', desc: 'Early, Late, Night and Days off in a repeating cycle', popular: true },
-              { id: 'nights',   patternType: 'nights' as const, icon: '🌙', title: 'Nights only',     desc: 'You work permanent night shifts', popular: false },
-              { id: 'days',     patternType: 'fixed' as const, icon: '☀️', title: 'Days only',        desc: 'Standard day shifts in a repeating pattern', popular: false },
-              { id: 'custom',   patternType: 'fixed' as const, icon: '⚙️', title: 'Custom',           desc: 'Build your own shift pattern from scratch', popular: false },
+              {
+                id: 'rotating',
+                patternType: 'fixed' as const,
+                icon: '🔄',
+                title: 'Rotating shifts',
+                desc: 'Early, Late, Night and Days off in a repeating cycle',
+                popular: true,
+              },
+              {
+                id: 'nights',
+                patternType: 'nights' as const,
+                icon: '🌙',
+                title: 'Nights only',
+                desc: 'You work permanent night shifts',
+                popular: false,
+              },
+              {
+                id: 'variable',
+                patternType: 'variable' as const,
+                icon: '🗓️',
+                title: 'Variable schedule',
+                desc: 'Your shifts change week to week — input them as they drop',
+                popular: false,
+              },
             ].map(option => (
               <button
                 key={option.id}
                 onClick={() => {
                   setPatternType(option.patternType)
-                  if (option.id !== 'nights') {
-                    setShifts(PRESET_SHIFTS[option.id] || PRESET_SHIFTS.custom)
-                  }
-                  setStep('configure')
+                  if (option.id === 'variable') setStep('variable')
+                  else if (option.id === 'nights') setStep('configure')
+                  else { setShifts(PRESET_SHIFTS); setStep('configure') }
                 }}
                 className="w-full bg-gray-900 border border-gray-800 hover:border-teal-500 rounded-2xl p-5 text-left transition-all"
               >
@@ -189,6 +279,179 @@ export default function Onboarding() {
           </div>
         )}
 
+        {/* ── STEP 2: Variable schedule ── */}
+        {step === 'variable' && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-white font-semibold text-lg">Your schedule</h2>
+              <p className="text-gray-400 text-sm mt-1">Tap each day to set your shift. Update this whenever your rota changes.</p>
+            </div>
+
+            {/* Start date */}
+            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+              <label className="block text-sm text-gray-400 mb-1">Schedule starts</label>
+              <p className="text-xs text-gray-600 mb-3">Pick the first day of your published schedule</p>
+              <input
+                type="date"
+                value={variableStartDate}
+                onChange={e => { setVariableStartDate(e.target.value); setVariableSchedule({}) }}
+                className="bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+
+            {/* How many weeks */}
+            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+              <label className="block text-sm text-gray-400 mb-3">How many weeks to fill in?</label>
+              <div className="flex gap-2">
+                {[2, 3, 4, 6].map(w => (
+                  <button
+                    key={w}
+                    onClick={() => { setVariableWeeks(w); setVariableSchedule({}) }}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                      variableWeeks === w ? 'bg-teal-500 text-gray-950' : 'bg-gray-800 text-gray-400'
+                    }`}
+                  >
+                    {w}w
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">{filledDays} of {totalDays} days set</span>
+              <span className="text-teal-400 font-medium">{Math.round((filledDays / totalDays) * 100)}%</span>
+            </div>
+            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-teal-500 rounded-full transition-all duration-300"
+                style={{ width: `${(filledDays / totalDays) * 100}%` }}
+              />
+            </div>
+
+            {/* Week tabs */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {Array.from({ length: variableWeeks }).map((_, wi) => (
+                <button
+                  key={wi}
+                  onClick={() => setActiveWeek(wi)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    activeWeek === wi
+                      ? 'bg-teal-900/60 text-teal-400 border border-teal-700/40'
+                      : 'bg-gray-800 text-gray-500'
+                  }`}
+                >
+                  Week {wi + 1} · {getWeekLabel(variableDates, wi)}
+                </button>
+              ))}
+            </div>
+
+            {/* Day list */}
+            <div className="space-y-2">
+              {variableDates.slice(activeWeek * 7, activeWeek * 7 + 7).map(dateStr => {
+                const entry = variableSchedule[dateStr]
+                const isEditing = editingDate === dateStr
+                const isToday = dateStr === new Date().toISOString().split('T')[0]
+                const shiftOption = entry ? VARIABLE_SHIFT_OPTIONS.find(o => o.label === entry.label) : null
+
+                return (
+                  <div key={dateStr}>
+                    <button
+                      onClick={() => setEditingDate(isEditing ? null : dateStr)}
+                      className={`w-full p-4 rounded-2xl border text-left transition-all ${
+                        entry
+                          ? `${shiftOption?.bg || 'bg-gray-800/40'} ${shiftOption?.border || 'border-gray-700'}`
+                          : 'bg-gray-900 border-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-semibold ${isToday ? 'text-teal-400' : 'text-white'}`}>
+                              {formatDisplayDate(dateStr)}
+                            </span>
+                            {isToday && (
+                              <span className="text-[9px] bg-teal-900/60 text-teal-400 border border-teal-700/40 px-1.5 py-0.5 rounded-full font-medium">
+                                TODAY
+                              </span>
+                            )}
+                          </div>
+                          {entry ? (
+                            <span className={`text-xs font-medium ${shiftOption?.color || 'text-gray-400'}`}>
+                              {entry.label}{!entry.isOff ? ` · ${entry.startTime}–${entry.endTime}` : ''}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-600">Tap to set shift</span>
+                          )}
+                        </div>
+                        <span className="text-gray-600">{isEditing ? '↑' : '↓'}</span>
+                      </div>
+                    </button>
+
+                    {/* Shift picker */}
+                    {isEditing && (
+                      <div className="bg-gray-900 border border-teal-700/20 border-t-0 rounded-b-2xl p-3 space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          {VARIABLE_SHIFT_OPTIONS.map(option => (
+                            <button
+                              key={option.label}
+                              onClick={() => setVariableDay(dateStr, option)}
+                              className={`p-3 rounded-xl border text-left transition-all ${
+                                entry?.label === option.label
+                                  ? `${option.bg} ${option.border}`
+                                  : 'bg-gray-800 border-gray-700'
+                              }`}
+                            >
+                              <div className={`text-sm font-semibold ${option.color}`}>{option.label}</div>
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                {option.isOff ? 'Rest day' : `${option.startTime}–${option.endTime}`}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Custom times */}
+                        {entry && !entry.isOff && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-2">Adjust times for this day</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-gray-800 rounded-xl p-3">
+                                <label className="block text-xs text-gray-500 mb-1">Start</label>
+                                <input
+                                  type="time"
+                                  value={entry.startTime}
+                                  onChange={e => updateVariableTimes(dateStr, e.target.value, entry.endTime)}
+                                  style={{ background: 'transparent', color: 'white', border: 'none', outline: 'none', fontSize: 14, width: '100%' }}
+                                />
+                              </div>
+                              <div className="bg-gray-800 rounded-xl p-3">
+                                <label className="block text-xs text-gray-500 mb-1">End</label>
+                                <input
+                                  type="time"
+                                  value={entry.endTime}
+                                  onChange={e => updateVariableTimes(dateStr, entry.startTime, e.target.value)}
+                                  style={{ background: 'transparent', color: 'white', border: 'none', outline: 'none', fontSize: 14, width: '100%' }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <button
+              onClick={() => setStep('life')}
+              className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
+            >
+              Next — A bit about your life →
+            </button>
+          </div>
+        )}
+
         {/* ── STEP 2: Configure Fixed ── */}
         {step === 'configure' && patternType === 'fixed' && (
           <div className="space-y-6">
@@ -196,7 +459,6 @@ export default function Onboarding() {
               <h2 className="text-white font-semibold text-lg">Your shift types</h2>
               <p className="text-gray-400 text-sm mt-1">Check the times look right — edit if needed</p>
             </div>
-
             <div>
               {shifts.map((shift, i) => (
                 <div key={i} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-3">
@@ -257,7 +519,6 @@ export default function Onboarding() {
               </button>
             </div>
 
-            {/* Cycle length */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
               <label className="block text-sm text-gray-400 mb-3">How long is your cycle? (days)</label>
               <div className="flex gap-2 flex-wrap">
@@ -275,7 +536,6 @@ export default function Onboarding() {
               </div>
             </div>
 
-            {/* Start date */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
               <label className="block text-sm text-gray-400 mb-1">When did your current cycle start?</label>
               <p className="text-xs text-gray-600 mb-3">Not sure? Pick the Monday your current block started</p>
@@ -339,7 +599,6 @@ export default function Onboarding() {
               <h2 className="text-white font-semibold text-lg">Map your {cycleLength}-day rotation</h2>
               <p className="text-gray-400 text-sm mt-1">Tap each day to cycle through your shift types</p>
             </div>
-
             <div className="flex flex-wrap gap-2">
               {shifts.map((shift, i) => (
                 <div key={i} className="flex items-center gap-1.5 bg-gray-900 rounded-full px-3 py-1 border border-gray-800">
@@ -348,7 +607,6 @@ export default function Onboarding() {
                 </div>
               ))}
             </div>
-
             <div className="grid grid-cols-7 gap-1.5">
               {Array.from({ length: cycleLength }).map((_, day) => {
                 const shiftIndex = rotation[day] ?? 0
@@ -370,7 +628,6 @@ export default function Onboarding() {
                 )
               })}
             </div>
-
             <button
               onClick={() => setStep('life')}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
@@ -389,7 +646,6 @@ export default function Onboarding() {
                 Helps ShiftWell give advice that fits your real life — not just your rota.
               </p>
             </div>
-
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -415,7 +671,6 @@ export default function Onboarding() {
                 </div>
               )}
             </div>
-
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
               <label className="block text-sm text-gray-400 mb-1">Latest you can sleep in on days off</label>
               <p className="text-gray-600 text-xs mb-3">Leave blank if no constraint</p>
@@ -426,7 +681,6 @@ export default function Onboarding() {
                 className="bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
-
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
               <label className="block text-sm text-gray-400 mb-1">Anything else we should know?</label>
               <p className="text-gray-600 text-xs mb-3">e.g. "I care for an elderly parent", "I train for marathons"</p>
@@ -438,7 +692,6 @@ export default function Onboarding() {
                 placeholder="Optional..."
               />
             </div>
-
             <button
               onClick={handleSave}
               disabled={saving}
@@ -454,8 +707,13 @@ export default function Onboarding() {
           <button
             onClick={() => {
               if (step === 'configure') setStep('type')
+              else if (step === 'variable') setStep('type')
               else if (step === 'rotation') setStep('configure')
-              else if (step === 'life') setStep(patternType === 'fixed' ? 'rotation' : 'configure')
+              else if (step === 'life') {
+                if (patternType === 'variable') setStep('variable')
+                else if (patternType === 'fixed') setStep('rotation')
+                else setStep('configure')
+              }
             }}
             className="w-full mt-4 text-gray-500 hover:text-gray-300 text-sm py-2 transition-colors"
           >
