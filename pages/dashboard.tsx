@@ -247,7 +247,11 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session?.access_token}`
           },
-          body: JSON.stringify({ userId: user.id }),
+          body: JSON.stringify({
+            userId: user.id,
+            localTime: new Date().toISOString(),
+            localDate: new Date().toLocaleDateString('en-CA'), // gives YYYY-MM-DD in local time
+          }),
         })
         const data = await res.json()
         setBriefing(data.briefing || '')

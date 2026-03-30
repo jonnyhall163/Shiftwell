@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (error || !profile) return res.status(404).json({ error: 'Profile not found' })
 
   // ── Check cache ──────────────────────────────────────
-  const todayDate = new Date().toISOString().split('T')[0]
+  const todayDate = (req.body.localDate as string) || new Date().toISOString().split('T')[0]
 
   if (profile.briefing_cache && profile.briefing_date === todayDate) {
     return res.status(200).json({ briefing: profile.briefing_cache, cached: true })
@@ -46,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const upcoming = getUpcomingShifts(patternData, 7)
   const name = profile.full_name?.split(' ')[0] || 'there'
 
-  const now = new Date()
+  const now = req.body.localTime ? new Date(req.body.localTime) : new Date()
   const hour = now.getHours()
   const timeOfDay =
     hour >= 5 && hour < 12 ? 'morning' :
