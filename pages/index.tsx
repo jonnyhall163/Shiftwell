@@ -74,7 +74,6 @@ export default function Landing() {
         `}</style>
       </Head>
 
-      {/* Backgrounds */}
       <div style={{ position: 'fixed', inset: 0, background: '#090c14', zIndex: 0 }} />
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
@@ -88,87 +87,63 @@ export default function Landing() {
 
       <div style={{ position: 'relative', zIndex: 1, color: '#f3f4f6', fontFamily: "'DM Sans', sans-serif", minHeight: '100vh' }}>
 
-        {/* Nav */}
         <nav style={{ padding: '24px 24px 0', maxWidth: 720, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="logo-dot" style={{ width: 8, height: 8, borderRadius: '50%', background: '#2dd4bf', flexShrink: 0 }} />
             ShiftWell
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <Link href="/login" style={{ color: '#9ca3af', fontSize: 14, textDecoration: 'none', fontWeight: 400 }}>
-              Sign in
-            </Link>
+            <Link href="/login" style={{ color: '#9ca3af', fontSize: 14, textDecoration: 'none', fontWeight: 400 }}>Sign in</Link>
             <Link href="/register" className="cta-primary" style={{
-              background: '#2dd4bf', color: '#090c14',
-              borderRadius: 10, padding: '9px 18px',
-              fontSize: 13, fontWeight: 700,
-              fontFamily: "'Syne', sans-serif",
+              background: '#2dd4bf', color: '#090c14', borderRadius: 10, padding: '9px 18px',
+              fontSize: 13, fontWeight: 700, fontFamily: "'Syne', sans-serif",
               textDecoration: 'none', whiteSpace: 'nowrap'
-            }}>
-              Start free trial
-            </Link>
+            }}>Start free trial</Link>
           </div>
         </nav>
 
-        {/* Hero */}
         <section style={{ padding: '72px 24px 56px', textAlign: 'center', maxWidth: 680, margin: '0 auto' }} className="fade-up">
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '6px 14px', borderRadius: 30,
-            background: 'rgba(251,191,36,0.15)',
-            border: '1px solid rgba(245,158,11,0.25)',
-            fontSize: 12, fontWeight: 500, color: '#fbbf24',
-            marginBottom: 28, letterSpacing: '0.3px'
+            background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(245,158,11,0.25)',
+            fontSize: 12, fontWeight: 500, color: '#fbbf24', marginBottom: 28, letterSpacing: '0.3px'
           }}>
             <div className="pill-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#fbbf24', flexShrink: 0 }} />
             Built for shift workers, by a shift worker
           </div>
 
           <h1 style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 'clamp(28px, 6vw, 48px)',
-            fontWeight: 800, lineHeight: 1.2,
-            letterSpacing: '-0.5px', marginBottom: 24, color: '#ffffff',
-            padding: '0 16px'
+            fontFamily: "'Syne', sans-serif", fontSize: 'clamp(28px, 6vw, 48px)',
+            fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.5px',
+            marginBottom: 24, color: '#ffffff', padding: '0 16px'
           }}>
             Your life doesn't run<br />
             on a <span style={{ color: '#fbbf24' }}>9-to-5.</span><br />
             Your app <span style={{ color: '#2dd4bf' }}>shouldn't</span> either.
           </h1>
 
-          <p style={{
-            fontSize: 17, fontWeight: 300, color: '#d1d5db',
-            maxWidth: 500, margin: '0 auto 40px', lineHeight: 1.7
-          }}>
+          <p style={{ fontSize: 17, fontWeight: 300, color: '#d1d5db', maxWidth: 500, margin: '0 auto 40px', lineHeight: 1.7 }}>
             ShiftWell wraps <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>sleep guidance, hydration, and daily AI coaching</strong> around your actual shift pattern — not some imaginary routine.
           </p>
 
           <div className="fade-up-1" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <Link href="/register" className="cta-primary" style={{
-              display: 'inline-block',
-              background: '#2dd4bf', color: '#090c14',
+              display: 'inline-block', background: '#2dd4bf', color: '#090c14',
               borderRadius: 12, padding: '16px 40px',
-              fontFamily: "'Syne', sans-serif", fontWeight: 700,
-              fontSize: 16, textDecoration: 'none',
-            }}>
-              Start your free 14-day trial →
-            </Link>
+              fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, textDecoration: 'none',
+            }}>Start your free 14-day trial →</Link>
             <p style={{ fontSize: 12, color: '#6b7280' }}>Free for 14 days. Cancel before then and pay nothing.</p>
           </div>
 
-          {/* Social proof */}
-          <div className="fade-up-2" style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 10, marginTop: 32, fontSize: 13, color: '#9ca3af'
-          }}>
+          <div className="fade-up-2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 32, fontSize: 13, color: '#9ca3af' }}>
             <div style={{ display: 'flex' }}>
               {([['#7c3aed','N'],['#0891b2','J'],['#b45309','S'],['#065f46','R']] as [string,string][]).map(([bg, letter], i) => (
                 <div key={i} style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  background: bg, border: '2px solid #090c14',
-                  marginLeft: i === 0 ? 0 : -8,
-                  fontSize: 11, display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', fontWeight: 600, color: 'white'
+                  width: 28, height: 28, borderRadius: '50%', background: bg,
+                  border: '2px solid #090c14', marginLeft: i === 0 ? 0 : -8,
+                  fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 600, color: 'white'
                 }}>{letter}</div>
               ))}
             </div>
@@ -180,7 +155,6 @@ export default function Landing() {
 
           <Divider label="The Problem" />
 
-          {/* Problem */}
           <div className="fade-up-2" style={{
             background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 20, padding: '28px 32px', marginBottom: 48
@@ -197,29 +171,38 @@ export default function Landing() {
 
           <Divider label="What You Get" />
 
-          {/* Features */}
-          <div className="fade-up-3" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 14, marginBottom: 64
-          }}>
-            {[
-              { icon: '🌙', title: 'Shift-Aware Sleep', desc: 'Sleep windows based on your actual rotation — not generic bedtime advice that assumes you sleep at night.' },
-              { icon: '💧', title: 'Hydration Timing', desc: 'Reminders timed to your shift phase. Night workers dehydrate differently — we know that.' },
-              { icon: '✦', title: 'Daily AI Briefing', desc: 'A personalised briefing every day that knows exactly where you are in your cycle.' },
-              { icon: '💬', title: 'Your 3am Companion', desc: "Something that's awake when you are. For the moments when you can't sleep and don't want to wake anyone up." },
-            ].map((f, i) => (
-              <div key={i} className="feature-card" style={{
-                background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 16, padding: 22
-              }}>
-                <div style={{ fontSize: 22, marginBottom: 10 }}>{f.icon}</div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>{f.title}</div>
-                <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.6, fontWeight: 300 }}>{f.desc}</div>
+          <div className="fade-up-3" style={{ marginBottom: 64 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginBottom: 14 }}>
+              {[
+                { icon: '🌙', title: 'Shift-Aware Sleep', desc: 'Sleep windows based on your actual rotation — not generic bedtime advice that assumes you sleep at night.' },
+                { icon: '💧', title: 'Hydration Tracking', desc: 'Track your intake against your shift phase. Night workers dehydrate differently — ShiftWell accounts for that.' },
+                { icon: '✦', title: 'Daily AI Briefing', desc: 'A personalised briefing every day that knows exactly where you are in your cycle.' },
+                { icon: '💬', title: 'Your 3am Companion', desc: "Something that's awake when you are. For the moments when you can't sleep and don't want to wake anyone up." },
+              ].map((f, i) => (
+                <div key={i} className="feature-card" style={{
+                  background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 22
+                }}>
+                  <div style={{ fontSize: 22, marginBottom: 10 }}>{f.icon}</div>
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>{f.title}</div>
+                  <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.6, fontWeight: 300 }}>{f.desc}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="feature-card" style={{
+              background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 16, padding: 22, display: 'flex', alignItems: 'flex-start', gap: 18
+            }}>
+              <div style={{ fontSize: 28, flexShrink: 0, marginTop: 2 }}>📓</div>
+              <div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>Shift Journal</div>
+                <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.6, fontWeight: 300 }}>
+                  Log how each shift felt in one tap. Over time, ShiftWell surfaces your personal patterns — so "Night 3 is always rough" stops being a feeling and becomes something you can actually prove.
+                </div>
               </div>
-            ))}
+            </div>
           </div>
 
-          {/* Builder note */}
           <div className="fade-up-4" style={{
             background: 'linear-gradient(135deg, rgba(245,158,11,0.06), rgba(45,212,191,0.06))',
             border: '1px solid rgba(255,255,255,0.08)',
@@ -242,7 +225,6 @@ export default function Landing() {
 
           <Divider label="Pricing" />
 
-          {/* Pricing */}
           <div className="fade-up-5" style={{ marginBottom: 64 }}>
             <p style={{ textAlign: 'center', fontSize: 15, color: '#9ca3af', marginBottom: 32, fontWeight: 300 }}>
               14-day free trial included. Cancel within 14 days and you won't be charged a penny.
@@ -250,48 +232,30 @@ export default function Landing() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-              {/* Annual */}
               <div className="pricing-card" style={{
                 background: 'linear-gradient(135deg, rgba(45,212,191,0.08), rgba(45,212,191,0.03))',
-                border: '1px solid rgba(45,212,191,0.35)',
-                borderRadius: 20, padding: '28px 24px',
+                border: '1px solid rgba(45,212,191,0.35)', borderRadius: 20, padding: '28px 24px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#2dd4bf', fontWeight: 600 }}>Annual</div>
-                  <div style={{
-                    background: '#fbbf24', color: '#090c14',
-                    fontSize: 10, fontWeight: 700, letterSpacing: 1,
-                    textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20
-                  }}>Best value</div>
+                  <div style={{ background: '#fbbf24', color: '#090c14', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20 }}>Best value</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
                   <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£59.99</span>
                   <span style={{ fontSize: 14, color: '#6b7280' }}>/year</span>
                 </div>
-                <div style={{ fontSize: 13, color: '#2dd4bf', marginBottom: 24, fontWeight: 500 }}>
-                  That's £5/month — you save £36 a year
-                </div>
+                <div style={{ fontSize: 13, color: '#2dd4bf', marginBottom: 24, fontWeight: 500 }}>That's £5/month — you save £36 a year</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {[
-                    'Shift-aware daily briefing',
-                    'Sleep & hydration tracker',
-                    'Food timing guidance',
-                    '3am companion chat',
-                    'Routines & exercises',
-                  ].map((item, i) => (
+                  {['Shift-aware daily briefing','Sleep & hydration tracker','Food timing guidance','3am companion chat','Routines & exercises','Shift journal & pattern tracking'].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
-                      <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>
-                      {item}
+                      <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Monthly */}
               <div className="pricing-card" style={{
-                background: '#111827',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 20, padding: '28px 24px',
+                background: '#111827', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '28px 24px',
               }}>
                 <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 600, marginBottom: 16 }}>Monthly</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 24 }}>
@@ -299,16 +263,9 @@ export default function Landing() {
                   <span style={{ fontSize: 14, color: '#6b7280' }}>/month</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {[
-                    'Shift-aware daily briefing',
-                    'Sleep & hydration tracker',
-                    'Food timing guidance',
-                    '3am companion chat',
-                    'Routines & exercises',
-                  ].map((item, i) => (
+                  {['Shift-aware daily briefing','Sleep & hydration tracker','Food timing guidance','3am companion chat','Routines & exercises','Shift journal & pattern tracking'].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
-                      <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>
-                      {item}
+                      <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
                     </div>
                   ))}
                 </div>
@@ -316,7 +273,6 @@ export default function Landing() {
 
             </div>
 
-            {/* Reassurance */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 20, flexWrap: 'wrap' }}>
               {['✓ 14-day free trial', '✓ Cancel anytime', '✓ No charge if you cancel early'].map((item, i) => (
                 <span key={i} style={{ fontSize: 12, color: '#6b7280' }}>{item}</span>
@@ -327,28 +283,20 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* Footer CTA */}
           <div className="fade-up-5" style={{ textAlign: 'center', padding: '0 0 80px' }}>
             <h2 style={{
               fontFamily: "'Syne', sans-serif", fontWeight: 800,
-              fontSize: 'clamp(22px, 4.5vw, 34px)',
-              letterSpacing: '-0.5px', marginBottom: 16, lineHeight: 1.3,
-              padding: '0 16px'
+              fontSize: 'clamp(22px, 4.5vw, 34px)', letterSpacing: '-0.5px',
+              marginBottom: 16, lineHeight: 1.3, padding: '0 16px'
             }}>
               Ready to finally feel like<br />the app gets you?
             </h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', marginBottom: 32 }}>
-              Free 14-day trial. Cancel within 14 days and pay nothing.
-            </p>
+            <p style={{ fontSize: 15, color: '#9ca3af', marginBottom: 32 }}>Free 14-day trial. Cancel within 14 days and pay nothing.</p>
             <Link href="/register" className="cta-primary" style={{
-              display: 'inline-block',
-              background: '#2dd4bf', color: '#090c14',
+              display: 'inline-block', background: '#2dd4bf', color: '#090c14',
               borderRadius: 12, padding: '16px 40px',
-              fontFamily: "'Syne', sans-serif", fontWeight: 700,
-              fontSize: 16, textDecoration: 'none'
-            }}>
-              Start free trial →
-            </Link>
+              fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, textDecoration: 'none'
+            }}>Start free trial →</Link>
             <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
               Already have an account?{' '}
               <Link href="/login" style={{ color: '#2dd4bf', textDecoration: 'none' }}>Sign in</Link>
@@ -357,7 +305,6 @@ export default function Landing() {
 
         </div>
 
-        {/* Footer */}
         <footer style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '28px 24px', textAlign: 'center' }}>
           <div style={{ marginBottom: 12 }}>
             <a href="/privacy" style={{ color: '#64748b', marginRight: 24, fontSize: 14, textDecoration: 'none' }}>Privacy Policy</a>
