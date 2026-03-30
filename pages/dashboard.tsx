@@ -196,6 +196,8 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
   const [hydrationCount, setHydrationCount] = useState(0)
   const [sleepStat, setSleepStat] = useState('—')
   const [nextMeal, setNextMeal] = useState('—')
+  const [journalEntry, setJournalEntry] = useState<any>(null)
+  const [journalRefresh, setJournalRefresh] = useState(0)
 
   const hour = new Date().getHours()
   const greeting =
@@ -257,6 +259,19 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
     }
 
     fetchBriefing()
+
+    const fetchJournalEntry = async () => {
+      const today = new Date().toISOString().split('T')[0]
+      const { data } = await supabase
+        .from('shiftwell_journal')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('shift_date', today)
+        .maybeSingle()
+      setJournalEntry(data || null)
+    }
+    fetchJournalEntry()
+    
   }, [])
 
   return (
@@ -335,6 +350,22 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
           </p>
         </div>
       )}
+      {/* Shift journal */}
+      <ShiftJournalCard
+        user={user}
+        todayShift={todayShift}
+        existingEntry={journalEntry}
+        onSaved={() => {
+          const today = new Date().toISOString().split('T')[0]
+          supabase
+            .from('shiftwell_journal')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('shift_date', today)
+            .maybeSingle()
+            .then(({ data }) => setJournalEntry(data || null))
+        }}
+      />
     </div>
   )
 }
@@ -1281,6 +1312,183 @@ function CompanionView({ user, profile }: { user: User, profile: any }) {
           ↑
         </button>
       </div>
+    </div>
+  )
+}
+// ── SHIFT JOURNAL ─────────────────────────────────────────
+function ShiftJournalCard({ user, todayShift, existingEntry, onSaved }: {
+  user: User
+  todayShift: TodayShift | null
+  existingEntry: any
+  onSaved: () => void
+}) {
+  const [rating, setRating] = useState<number | null>(null)
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [history, setHistory] = useState<any[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+
+  const RATINGS = [
+    { value: 1, emoji: '😩', label: 'Brutal' },
+    { value: 2, emoji: '😔', label: 'Rough' },
+    { value: 3, emoji: '😐', label: 'Okay' },
+    { value: 4, emoji: '🙂', label: 'Good' },
+    { value: 5, emoji: '😄', label: 'Great' },
+  ]
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true)
+    const { data } = await supabase
+      .from('shiftwell_journal')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('shift_date', { ascending: false })
+      .limit(14)
+    setHistory(data || [])
+    setLoadingHistory(false)
+  }
+
+  const handleToggleHistory = () => {
+    if (!showHistory && history.length === 0) fetchHistory()
+    setShowHistory(h => !h)
+  }
+
+  const handleSave = async () => {
+    if (!rating) return
+    setSaving(true)
+    const today = new Date().toISOString().split('T')[0]
+    const shiftType = todayShift?.isOff ? 'Rest day' : (todayShift?.label || 'Unknown')
+
+    const { error } = await supabase
+      .from('shiftwell_journal')
+      .upsert(
+        { user_id: user.id, shift_date: today, shift_type: shiftType, rating, note: note.trim() || null },
+        { onConflict: 'user_id,shift_date' }
+      )
+
+    if (!error) onSaved()
+    setSaving(false)
+  }
+
+  const formatEntryDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T12:00:00')
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  }
+
+  const HistoryList = ({ entries }: { entries: any[] }) => (
+    <div className="mt-4 border-t border-gray-800 pt-4 space-y-3">
+      {loadingHistory ? (
+        <p className="text-gray-600 text-xs text-center py-2">Loading...</p>
+      ) : entries.length === 0 ? (
+        <p className="text-gray-600 text-xs text-center py-2">No previous entries yet.</p>
+      ) : (
+        entries.map(entry => {
+          const r = RATINGS.find(r => r.value === entry.rating)
+          return (
+            <div key={entry.id} className="flex items-start gap-3">
+              <span className="text-lg leading-none mt-0.5">{r?.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-white text-xs font-medium">{r?.label}</span>
+                  <span className="text-gray-700 text-xs">·</span>
+                  <span className="text-gray-500 text-xs">{entry.shift_type}</span>
+                </div>
+                {entry.note && (
+                  <p className="text-gray-600 text-xs italic mt-0.5 truncate">"{entry.note}"</p>
+                )}
+              </div>
+              <span className="text-gray-700 text-xs whitespace-nowrap flex-shrink-0">
+                {formatEntryDate(entry.shift_date)}
+              </span>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+
+  // ── Already logged today ──
+  if (existingEntry) {
+    const logged = RATINGS.find(r => r.value === existingEntry.rating)
+    return (
+      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-white font-semibold text-sm">📓 Shift journal</p>
+          <button onClick={handleToggleHistory} className="text-teal-400 text-xs hover:text-teal-300 transition">
+            {showHistory ? 'Hide history' : 'View history'}
+          </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{logged?.emoji}</span>
+          <div className="flex-1">
+            <p className="text-white text-sm font-medium">{logged?.label}</p>
+            {existingEntry.note && (
+              <p className="text-gray-400 text-xs mt-0.5 italic">"{existingEntry.note}"</p>
+            )}
+          </div>
+          <span className="text-gray-600 text-xs">{existingEntry.shift_type}</span>
+        </div>
+        {showHistory && <HistoryList entries={history.filter(e => e.shift_date !== existingEntry.shift_date)} />}
+      </div>
+    )
+  }
+
+  // ── Not yet logged ──
+  return (
+    <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-white font-semibold text-sm">📓 How was your shift?</p>
+        <button onClick={handleToggleHistory} className="text-gray-600 text-xs hover:text-gray-400 transition">
+          {showHistory ? 'Hide' : 'History'}
+        </button>
+      </div>
+      <p className="text-gray-500 text-xs mb-4">
+        {todayShift?.isOff ? 'Rest day' : `${todayShift?.label} shift`} · one tap, then you're done
+      </p>
+
+      {/* Rating row */}
+      <div className="flex gap-2 mb-4">
+        {RATINGS.map(r => (
+          <button
+            key={r.value}
+            onClick={() => setRating(r.value)}
+            className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl transition"
+            style={{
+              background: rating === r.value ? 'rgba(45,212,191,0.1)' : '#111827',
+              border: rating === r.value ? '1px solid rgba(45,212,191,0.4)' : '1px solid #1f2937',
+            }}
+          >
+            <span className="text-xl">{r.emoji}</span>
+            <span style={{ fontSize: 9, color: rating === r.value ? '#2dd4bf' : '#4b5563', fontWeight: 600 }}>
+              {r.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Note — only appears once rating is selected */}
+      {rating !== null && (
+        <div className="mb-4">
+          <input
+            type="text"
+            value={note}
+            onChange={e => setNote(e.target.value.slice(0, 280))}
+            placeholder="What made it that way? (optional)"
+            className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-600"
+          />
+        </div>
+      )}
+
+      <button
+        onClick={handleSave}
+        disabled={!rating || saving}
+        className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition text-sm disabled:opacity-40"
+      >
+        {saving ? 'Saving...' : 'Log shift'}
+      </button>
+
+      {showHistory && <HistoryList entries={history} />}
     </div>
   )
 }
