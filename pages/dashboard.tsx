@@ -104,7 +104,7 @@ export default function Dashboard() {
                   label: 'Shift pattern',
                   icon: '🔄',
                   sub: profile?.pattern_type === 'fixed' ? 'Fixed rotation' : 'Nights only',
-                  onClick: () => { router.push('/onboarding'); setShowProfileMenu(false) }
+                  onClick: () => { router.push('/edit-schedule'); setShowProfileMenu(false) }
                 },
                 {
                   label: 'Notifications',
