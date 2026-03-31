@@ -101,9 +101,11 @@ export default function Dashboard() {
               </div>
               {[
                 {
-                  label: 'Shift pattern',
+                  label: 'Shift & profile',
                   icon: '🔄',
-                  sub: profile?.pattern_type === 'fixed' ? 'Fixed rotation' : 'Nights only',
+                  sub: profile?.pattern_type === 'fixed' ? 'Fixed rotation' :
+                     profile?.pattern_type === 'nights' ? 'Nights only' :
+                     profile?.pattern_type === 'variable' ? 'Variable schedule' : 'Edit',
                   onClick: () => { router.push('/edit-schedule'); setShowProfileMenu(false) }
                 },
                 {
@@ -212,7 +214,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
       const shift = getTodayShift(profile.pattern_data as PatternData)
       setTodayShift(shift)
       if (shift && !shift.isOff) {
-        setNextMeal(getNextMeal(shift))
+        setNextMeal(getNextMeal(shift, profile?.dietary_restrictions || []))
       } else if (shift?.isOff) {
         setNextMeal('Rest day')
       }
@@ -816,7 +818,7 @@ function FoodView({ profile }: { profile: any }) {
     )
   }
 
-  const plan = getFoodPlan(todayShift)
+  const plan = getFoodPlan(todayShift, profile?.dietary_restrictions || [])
 
   return (
     <div className="space-y-5 max-w-lg mx-auto">
@@ -1524,7 +1526,7 @@ function SettingsView({ user, profile, onSignOut }: { user: User, profile: any, 
       <div className="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800">
         {[
           {
-            label: 'Shift pattern',
+            label: 'Shift & profile',
             sub: profile?.pattern_type === 'fixed' ? 'Fixed rotation' : profile?.pattern_type === 'nights' ? 'Nights only' : 'Not set',
             icon: '🔄',
             onClick: () => router.push('/onboarding')

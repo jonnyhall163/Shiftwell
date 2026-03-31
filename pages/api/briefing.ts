@@ -129,6 +129,9 @@ function buildLifeContext(profile: any): string {
 
   if (profile.life_notes) {
     lines.push(`Additional context: ${profile.life_notes}`)
+    if (profile.dietary_restrictions?.length > 0) {
+      lines.push(`Dietary requirements: ${profile.dietary_restrictions.join(', ')}. Never suggest foods that conflict with these requirements.`)
+    }
   }
 
   return lines.join('\n')

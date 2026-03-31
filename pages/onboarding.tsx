@@ -89,6 +89,7 @@ export default function Onboarding() {
   const [schoolRunTime, setSchoolRunTime] = useState('08:00')
   const [wakeConstraint, setWakeConstraint] = useState('')
   const [lifeNotes, setLifeNotes] = useState('')
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([])
 
   useEffect(() => {
     setRotation(Array(cycleLength).fill(0))
@@ -170,6 +171,7 @@ export default function Onboarding() {
         school_run_time: hasKids ? schoolRunTime : null,
         wake_constraint: wakeConstraint || null,
         life_notes: lifeNotes || null,
+        dietary_restrictions: dietaryRestrictions,
         briefing_cache: null,
         briefing_date: null,
       })
@@ -691,6 +693,32 @@ export default function Onboarding() {
                 className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                 placeholder="Optional..."
               />
+            </div>
+            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+              <label className="block text-sm text-gray-400 mb-1">Dietary requirements</label>
+              <p className="text-gray-600 text-xs mb-3">Select all that apply — affects food suggestions</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  'Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free',
+                  'Halal', 'Kosher', 'No pork', 'No shellfish', 'Low carb'
+                ].map(diet => (
+                  <button
+                    key={diet}
+                    onClick={() => {
+                      setDietaryRestrictions(prev =>
+                        prev.includes(diet) ? prev.filter(d => d !== diet) : [...prev, diet]
+                      )
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                      dietaryRestrictions.includes(diet)
+                        ? 'bg-teal-900/60 text-teal-400 border-teal-700/40'
+                        : 'bg-gray-800 text-gray-400 border-gray-700'
+                    }`}
+                  >
+                    {diet}
+                  </button>
+                ))}
+              </div>
             </div>
             <button
               onClick={handleSave}
