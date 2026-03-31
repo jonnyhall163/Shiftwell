@@ -124,7 +124,7 @@ export default function Landing() {
           </h1>
 
           <p style={{ fontSize: 17, fontWeight: 300, color: '#d1d5db', maxWidth: 500, margin: '0 auto 40px', lineHeight: 1.7 }}>
-            ShiftWell wraps <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>sleep guidance, hydration, and daily AI coaching</strong> around your actual shift pattern — not some imaginary routine.
+            ShiftWell wraps <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>sleep guidance, food timing, and daily AI coaching</strong> around your actual shift pattern — not some imaginary routine.
           </p>
 
           <div className="fade-up-1" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -174,10 +174,26 @@ export default function Landing() {
           <div className="fade-up-3" style={{ marginBottom: 64 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginBottom: 14 }}>
               {[
-                { icon: '🌙', title: 'Shift-Aware Sleep', desc: 'Sleep windows based on your actual rotation — not generic bedtime advice that assumes you sleep at night.' },
-                { icon: '💧', title: 'Hydration Tracking', desc: 'Track your intake against your shift phase. Night workers dehydrate differently — ShiftWell accounts for that.' },
-                { icon: '✦', title: 'Daily AI Briefing', desc: 'A personalised briefing every day that knows exactly where you are in your cycle.' },
-                { icon: '💬', title: 'Your 3am Companion', desc: "Something that's awake when you are. For the moments when you can't sleep and don't want to wake anyone up." },
+                {
+                  icon: '🌙',
+                  title: 'Shift-Aware Sleep',
+                  desc: 'Sleep windows based on your actual rotation — not generic bedtime advice that assumes you sleep at night.'
+                },
+                {
+                  icon: '🍽️',
+                  title: 'Food That Fits Your Shifts',
+                  desc: 'Meal timing built around your rotation — no breakfast, lunch or dinner labels. Dietary preferences baked in so suggestions actually work for you.'
+                },
+                {
+                  icon: '✦',
+                  title: 'Daily AI Briefing',
+                  desc: 'A personalised briefing every day that knows exactly where you are in your cycle — and what your body needs right now.'
+                },
+                {
+                  icon: '💬',
+                  title: 'Your 3am Companion',
+                  desc: "Something that's awake when you are. For the moments when you can't sleep and don't want to wake anyone up."
+                },
               ].map((f, i) => (
                 <div key={i} className="feature-card" style={{
                   background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 22
@@ -189,6 +205,7 @@ export default function Landing() {
               ))}
             </div>
 
+            {/* Shift Journal — full width */}
             <div className="feature-card" style={{
               background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 16, padding: 22, display: 'flex', alignItems: 'flex-start', gap: 18
@@ -203,6 +220,7 @@ export default function Landing() {
             </div>
           </div>
 
+          {/* Builder note */}
           <div className="fade-up-4" style={{
             background: 'linear-gradient(135deg, rgba(245,158,11,0.06), rgba(45,212,191,0.06))',
             border: '1px solid rgba(255,255,255,0.08)',
@@ -246,7 +264,14 @@ export default function Landing() {
                 </div>
                 <div style={{ fontSize: 13, color: '#2dd4bf', marginBottom: 24, fontWeight: 500 }}>That's £5/month — you save £36 a year</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {['Shift-aware daily briefing','Sleep & hydration tracker','Food timing guidance','3am companion chat','Routines & exercises','Shift journal & pattern tracking'].map((item, i) => (
+                  {[
+                    'Shift-aware daily briefing',
+                    'Sleep & hydration tracker',
+                    'Food timing + dietary preferences',
+                    '3am companion chat',
+                    'Routines & exercises',
+                    'Shift journal & pattern tracking',
+                  ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
                       <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
                     </div>
@@ -263,7 +288,14 @@ export default function Landing() {
                   <span style={{ fontSize: 14, color: '#6b7280' }}>/month</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {['Shift-aware daily briefing','Sleep & hydration tracker','Food timing guidance','3am companion chat','Routines & exercises','Shift journal & pattern tracking'].map((item, i) => (
+                  {[
+                    'Shift-aware daily briefing',
+                    'Sleep & hydration tracker',
+                    'Food timing + dietary preferences',
+                    '3am companion chat',
+                    'Routines & exercises',
+                    'Shift journal & pattern tracking',
+                  ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
                       <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
                     </div>
