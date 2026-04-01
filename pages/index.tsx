@@ -32,7 +32,7 @@ export default function Landing() {
     <>
       <Head>
         <title>ShiftWell — Built for Shift Workers</title>
-        <meta name="description" content="The first wellness app that wraps sleep, hydration and daily coaching around your actual shift pattern." />
+        <meta name="description" content="ShiftWell is a wellness app built for shift workers. Sleep guidance, food timing and AI coaching that actually fits your rotation — not a 9-to-5." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
