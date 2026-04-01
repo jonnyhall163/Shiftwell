@@ -200,6 +200,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
   const [nextMeal, setNextMeal] = useState('—')
   const [journalEntry, setJournalEntry] = useState<any>(null)
   const [journalRefresh, setJournalRefresh] = useState(0)
+  const [streak, setStreak] = useState(profile?.streak_count || 0)
 
   const hour = new Date().getHours()
   const greeting =
@@ -277,6 +278,28 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
       setJournalEntry(data || null)
     }
     fetchJournalEntry()
+
+    const maintainRestDayStreak = async () => {
+      if (!profile?.pattern_data) return
+      const shift = getTodayShift(profile.pattern_data as PatternData)
+      if (!shift?.isOff) return
+
+      const today = new Date().toLocaleDateString('en-CA')
+      if (profile?.streak_last_date === today) return
+
+      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA')
+      const newStreak = profile?.streak_last_date === yesterday
+        ? (profile?.streak_count || 0) + 1
+        : (profile?.streak_count || 0) > 0 ? profile.streak_count : 1
+
+      await supabase
+        .from('shiftwell_profiles')
+        .update({ streak_count: newStreak, streak_last_date: today })
+        .eq('id', user.id)
+
+      setStreak(newStreak)
+    }
+    maintainRestDayStreak()
     
   }, [])
 
@@ -310,6 +333,9 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
           <p className="text-gray-300 text-sm leading-relaxed">{briefing}</p>
         )}
       </div>
+
+      {/* Streak card */}
+      <StreakCard streak={streak} />
 
       {/* Quick stats grid */}
       <div className="grid grid-cols-2 gap-3">
@@ -359,9 +385,11 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
       {/* Shift journal */}
       <ShiftJournalCard
         user={user}
+        profile={profile}
         todayShift={todayShift}
         existingEntry={journalEntry}
-        onSaved={() => {
+        onSaved={(newStreak?: number) => {
+          if (newStreak !== undefined) setStreak(newStreak)
           const today = new Date().toISOString().split('T')[0]
           supabase
             .from('shiftwell_journal')
@@ -1321,13 +1349,76 @@ function CompanionView({ user, profile }: { user: User, profile: any }) {
     </div>
   )
 }
+
+// ── STREAK CARD ───────────────────────────────────────────
+function StreakCard({ streak }: { streak: number }) {
+  const getMessage = () => {
+    if (streak === 0) return 'Log your first shift to start your streak'
+    if (streak === 1) return 'Day 1 — you showed up'
+    if (streak < 7) return 'Building momentum — keep going'
+    if (streak < 14) return 'One week strong 💪'
+    if (streak < 28) return 'Two weeks in — this is becoming a habit'
+    if (streak < 60) return 'A month of showing up. Seriously impressive.'
+    return "You're unstoppable 🏆"
+  }
+
+  return (
+    <div style={{
+      background: streak > 0
+        ? 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(251,191,36,0.06))'
+        : 'rgba(17,24,39,0.8)',
+      border: streak > 0
+        ? '1px solid rgba(245,158,11,0.3)'
+        : '1px solid rgba(255,255,255,0.06)',
+      borderRadius: 16,
+      padding: '16px 20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 16,
+    }}>
+      <div style={{ fontSize: 36, lineHeight: 1 }}>
+        {streak === 0 ? '🔥' : streak >= 30 ? '🔥' : streak >= 7 ? '🔥' : '🔥'}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{
+            fontFamily: 'system-ui, sans-serif',
+            fontWeight: 800,
+            fontSize: 32,
+            color: streak > 0 ? '#fbbf24' : '#4b5563',
+            lineHeight: 1,
+          }}>
+            {streak}
+          </span>
+          <span style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: streak > 0 ? '#f59e0b' : '#4b5563',
+          }}>
+            {streak === 1 ? 'day streak' : 'day streak'}
+          </span>
+        </div>
+        <p style={{
+          fontSize: 11,
+          color: streak > 0 ? '#d97706' : '#6b7280',
+          marginTop: 3,
+          fontWeight: 400,
+        }}>
+          {getMessage()}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ── SHIFT JOURNAL ─────────────────────────────────────────
-function ShiftJournalCard({ user, todayShift, existingEntry, onSaved }: {
+function ShiftJournalCard({ user, profile, todayShift, existingEntry, onSaved }: {
   user: User
+  profile: any
   todayShift: TodayShift | null
   existingEntry: any
-  onSaved: () => void
-}) {
+  onSaved: (newStreak?: number) => void
+}){
   const [rating, setRating] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
@@ -1363,7 +1454,7 @@ function ShiftJournalCard({ user, todayShift, existingEntry, onSaved }: {
   const handleSave = async () => {
     if (!rating) return
     setSaving(true)
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA')
     const shiftType = todayShift?.isOff ? 'Rest day' : (todayShift?.label || 'Unknown')
 
     const { error } = await supabase
@@ -1373,7 +1464,24 @@ function ShiftJournalCard({ user, todayShift, existingEntry, onSaved }: {
         { onConflict: 'user_id,shift_date' }
       )
 
-    if (!error) onSaved()
+    if (!error) {
+      // Update streak
+      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA')
+      const lastDate = profile?.streak_last_date
+      let newStreak = 1
+      if (lastDate === today) {
+        newStreak = profile?.streak_count || 1
+      } else if (lastDate === yesterday) {
+        newStreak = (profile?.streak_count || 0) + 1
+      }
+
+      await supabase
+        .from('shiftwell_profiles')
+        .update({ streak_count: newStreak, streak_last_date: today })
+        .eq('id', user.id)
+
+      onSaved(newStreak)
+    }
     setSaving(false)
   }
 
