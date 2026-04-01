@@ -8,6 +8,13 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
 })
 
+function getTimeBlock(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'morning'
+  if (hour >= 12 && hour < 18) return 'afternoon'
+  if (hour >= 18 && hour < 23) return 'evening'
+  return 'night'
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -31,10 +38,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (error || !profile) return res.status(404).json({ error: 'Profile not found' })
 
-  // ── Check cache ──────────────────────────────────────
+  // ── Time block cache key ─────────────────────────────
+  const now = req.body.localTime ? new Date(req.body.localTime) : new Date()
+  const hour = now.getHours()
   const todayDate = (req.body.localDate as string) || new Date().toISOString().split('T')[0]
+  const timeBlock = getTimeBlock(hour)
+  const cacheKey = `${todayDate}-${timeBlock}`
 
-  if (profile.briefing_cache && profile.briefing_date === todayDate) {
+  if (profile.briefing_cache && profile.briefing_date === cacheKey) {
     return res.status(200).json({ briefing: profile.briefing_cache, cached: true })
   }
 
@@ -46,28 +57,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const upcoming = getUpcomingShifts(patternData, 7)
   const name = profile.full_name?.split(' ')[0] || 'there'
 
-  const now = req.body.localTime ? new Date(req.body.localTime) : new Date()
-  const hour = now.getHours()
   const timeOfDay =
     hour >= 5 && hour < 12 ? 'morning' :
     hour >= 12 && hour < 18 ? 'afternoon' :
-    hour >= 18 && hour < 22 ? 'evening' : 'middle of the night'
+    hour >= 18 && hour < 23 ? 'evening' : 'middle of the night'
+
+  const currentDate = now.toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  })
 
   const upcomingText = upcoming
     .map((s, i) => {
-      const date = new Date()
+      const date = new Date(now)
       date.setDate(date.getDate() + i)
       const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : date.toLocaleDateString('en-GB', { weekday: 'long' })
       return `${dayName}: ${s.label}${s.isOff ? ' (rest day)' : ` (${s.startTime}–${s.endTime})`}`
     })
     .join('\n')
 
-  // Build life context string
   const lifeContext = buildLifeContext(profile)
 
   const prompt = `You are ShiftWell AI — a warm, practical wellness companion for shift workers. You understand the physical and emotional reality of shift work deeply. You never use toxic positivity. You speak like a knowledgeable friend, not a corporate wellness bot.
 
 User: ${name}
+Current date: ${currentDate}
 Current time: ${timeOfDay} (${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })})
 Today's shift: ${todayShift.label}${todayShift.isOff ? ' (rest day)' : ` — ${todayShift.startTime} to ${todayShift.endTime}`}
 ${todayShift.dayInCycle ? `Day ${todayShift.dayInCycle} of their rotation` : ''}
@@ -86,6 +99,7 @@ Rules:
 - Never frame shift work negatively — they chose this life, help them thrive in it
 - Be warm but concise — no bullet points, just flowing prose
 - Max 120 words total
+- Only reference the actual current season and weather conditions for the real current date — do not assume or invent seasonal details
 - NEVER suggest sleep times that would prevent the user meeting their hard constraints
 - Never use markdown formatting like **bold** — plain text only`
 
@@ -98,12 +112,11 @@ Rules:
 
     const briefing = message.content[0].type === 'text' ? message.content[0].text : ''
 
-    // ── Save to cache ────────────────────────────────────
     await supabase
       .from('shiftwell_profiles')
       .update({
         briefing_cache: briefing,
-        briefing_date: todayDate,
+        briefing_date: cacheKey,
       })
       .eq('id', user.id)
 
@@ -129,9 +142,10 @@ function buildLifeContext(profile: any): string {
 
   if (profile.life_notes) {
     lines.push(`Additional context: ${profile.life_notes}`)
-    if (profile.dietary_restrictions?.length > 0) {
-      lines.push(`Dietary requirements: ${profile.dietary_restrictions.join(', ')}. Never suggest foods that conflict with these requirements.`)
-    }
+  }
+
+  if (profile.dietary_restrictions?.length > 0) {
+    lines.push(`Dietary requirements: ${profile.dietary_restrictions.join(', ')}. Never suggest foods that conflict with these requirements.`)
   }
 
   return lines.join('\n')
