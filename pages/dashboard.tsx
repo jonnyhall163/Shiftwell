@@ -1810,14 +1810,32 @@ function CommunityView({ user, profile }: { user: User, profile: any }) {
 
     if (filter) query = query.eq('shift_type', filter)
 
-    const { data } = await query
-    setPosts(data || [])
+    const { data: postsData } = await query
 
-    // fetch user's hearts
+    // Fetch heart counts separately
+    const { data: heartCounts } = await supabase
+      .from('shiftwell_community_hearts')
+      .select('post_id')
+
+    // Fetch user's own hearts
     const { data: myHearts } = await supabase
       .from('shiftwell_community_hearts')
       .select('post_id')
       .eq('user_id', user.id)
+
+    // Count hearts per post
+    const countMap: Record<string, number> = {}
+    heartCounts?.forEach(h => {
+      countMap[h.post_id] = (countMap[h.post_id] || 0) + 1
+    })
+
+    // Attach counts to posts
+    const postsWithCounts = (postsData || []).map(p => ({
+      ...p,
+      heartCount: countMap[p.id] || 0
+    }))
+
+    setPosts(postsWithCounts)
     setHearts(new Set(myHearts?.map(h => h.post_id) || []))
     setLoading(false)
   }
@@ -1967,7 +1985,7 @@ function CommunityView({ user, profile }: { user: User, profile: any }) {
       ) : (
         <div className="space-y-3">
           {posts.map(post => {
-          const heartCount = 0
+          const heartCount = post.heartCount || 0
             const isHearted = hearts.has(post.id)
             const isOwn = post.user_id === user.id
             return (
