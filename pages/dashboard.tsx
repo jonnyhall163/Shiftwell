@@ -1792,6 +1792,9 @@ function CommunityView({ user, profile }: { user: User, profile: any }) {
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState<string | null>(null)
   const [hearts, setHearts] = useState<Set<string>>(new Set())
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [editingPost, setEditingPost] = useState<string | null>(null)
+  const [editDraft, setEditDraft] = useState('')
 
   const todayShift = profile?.pattern_data
     ? getTodayShift(profile.pattern_data as PatternData)
@@ -2001,10 +2004,79 @@ function CommunityView({ user, profile }: { user: User, profile: any }) {
                       fontSize: 10, color: '#2dd4bf', fontWeight: 600,
                     }}>{post.shift_type}</span>
                   </div>
-                  <span className="text-gray-700 text-xs flex-shrink-0">{formatTime(post.created_at)}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-gray-700 text-xs">{formatTime(post.created_at)}</span>
+                    {isOwn && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenMenu(openMenu === post.id ? null : post.id)}
+                          className="text-gray-600 hover:text-gray-400 text-sm px-1"
+                        >
+                          ⋯
+                        </button>
+                        {openMenu === post.id && (
+                          <div className="absolute right-0 top-6 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-10 overflow-hidden w-28">
+                            <button
+                              onClick={() => {
+                                setEditingPost(post.id)
+                                setEditDraft(post.content)
+                                setOpenMenu(null)
+                              }}
+                              className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-gray-700 transition"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={async () => {
+                                await supabase.from('shiftwell_community_posts').delete().eq('id', post.id)
+                                setOpenMenu(null)
+                                fetchPosts()
+                              }}
+                              className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-gray-700 transition border-t border-gray-700"
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <p className="text-gray-300 text-sm leading-relaxed mb-3 font-light">{post.content}</p>
+                {editingPost === post.id ? (
+                  <div className="mb-3 space-y-2">
+                    <textarea
+                      value={editDraft}
+                      onChange={e => setEditDraft(e.target.value.slice(0, 500))}
+                      rows={3}
+                      className="w-full bg-gray-800 text-white rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          if (!editDraft.trim()) return
+                          await supabase.from('shiftwell_community_posts')
+                            .update({ content: editDraft.trim() })
+                            .eq('id', post.id)
+                          setEditingPost(null)
+                          setEditDraft('')
+                          fetchPosts()
+                        }}
+                        className="bg-teal-500 text-gray-950 font-semibold px-4 py-1.5 rounded-lg text-sm"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => { setEditingPost(null); setEditDraft('') }}
+                        className="text-gray-500 text-sm px-2"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-300 text-sm leading-relaxed mb-3 font-light">{post.content}</p>
+                )}
 
                 <div className="flex items-center gap-4">
                   <button
