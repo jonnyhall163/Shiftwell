@@ -11,7 +11,7 @@ const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
   { id: 'sleep',     label: 'Sleep',     icon: '🌙' },
   { id: 'food',      label: 'Food',      icon: '🍽️' },
-  { id: 'routines',  label: 'Routines',  icon: '⚡' },
+  { id: 'community', label: 'Community', icon: '💬' },
   { id: 'companion', label: 'Companion', icon: '✦' },
 ]
 
@@ -167,7 +167,7 @@ export default function Dashboard() {
         {activeTab === 'today'    && <TodayView user={user} profile={profile} />}
         {activeTab === 'sleep'    && <SleepView user={user} />}
         {activeTab === 'food' && <FoodView profile={profile} />}
-        {activeTab === 'routines' && <RoutinesView user={user} profile={profile} />}
+        {activeTab === 'community' && <CommunityView user={user} profile={profile} />}
         {activeTab === 'companion' && <CompanionView user={user} profile={profile} />}
       </main>
 
@@ -382,6 +382,10 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
           </p>
         </div>
       )}
+
+      {/* Quick routines */}
+      <QuickRoutinesStrip profile={profile} />
+      
       {/* Shift journal */}
       <ShiftJournalCard
         user={user}
@@ -1603,6 +1607,408 @@ function ShiftJournalCard({ user, profile, todayShift, existingEntry, onSaved }:
       </button>
 
       {showHistory && <HistoryList entries={history} />}
+    </div>
+  )
+}
+
+// ── QUICK ROUTINES STRIP ──────────────────────────────────
+function QuickRoutinesStrip({ profile }: { profile: any }) {
+  const [activeRoutine, setActiveRoutine] = useState<any>(null)
+  const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [isResting, setIsResting] = useState(false)
+  const [isRunning, setIsRunning] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const todayShift = profile?.pattern_data
+    ? getTodayShift(profile.pattern_data as PatternData)
+    : null
+
+  const filteredRoutines = ROUTINES.slice(0, 6)
+
+  useEffect(() => {
+    if (!isRunning) return
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) { handleTimerEnd(); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [isRunning, activeExerciseIndex, isResting])
+
+  const handleTimerEnd = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    setIsRunning(false)
+    if (!activeRoutine) return
+    const exercise = activeRoutine.exercises[activeExerciseIndex]
+    if (!isResting && exercise.rest && exercise.rest > 0) {
+      setIsResting(true)
+      setTimeLeft(exercise.rest)
+      setIsRunning(true)
+      return
+    }
+    const nextIndex = activeExerciseIndex + 1
+    if (nextIndex >= activeRoutine.exercises.length) {
+      setIsComplete(true)
+      logRoutine()
+      return
+    }
+    setIsResting(false)
+    setActiveExerciseIndex(nextIndex)
+    setTimeLeft(activeRoutine.exercises[nextIndex].duration)
+    setIsRunning(true)
+  }
+
+  const logRoutine = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !activeRoutine) return
+    await supabase.from('shiftwell_routines_log').insert({
+      user_id: user.id,
+      routine_name: activeRoutine.name,
+      category: activeRoutine.category,
+      duration_minutes: activeRoutine.duration,
+    })
+  }
+
+  const startRoutine = (routine: any) => {
+    setActiveRoutine(routine)
+    setActiveExerciseIndex(0)
+    setTimeLeft(routine.exercises[0].duration)
+    setIsResting(false)
+    setIsRunning(false)
+    setIsComplete(false)
+  }
+
+  const exitRoutine = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    setActiveRoutine(null)
+    setIsRunning(false)
+    setIsComplete(false)
+  }
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  const circumference = 2 * Math.PI * 45
+
+  // ── Active routine overlay ──
+  if (activeRoutine) {
+    const exercise = activeRoutine.exercises[activeExerciseIndex]
+    const totalDuration = isResting ? (exercise.rest || 0) : exercise.duration
+    const progress = totalDuration > 0 ? (timeLeft / totalDuration) : 0
+
+    if (isComplete) {
+      return (
+        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 text-center space-y-4">
+          <div className="text-5xl">🎉</div>
+          <p className="text-white font-bold text-lg">Routine complete!</p>
+          <p className="text-gray-400 text-sm">{activeRoutine.name} — {activeRoutine.duration} mins done.</p>
+          <button onClick={exitRoutine} className="w-full bg-teal-500 text-gray-950 font-semibold py-3 rounded-xl text-sm">
+            Back to Today
+          </button>
+        </div>
+      )
+    }
+
+    return (
+      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-white font-bold text-sm">{activeRoutine.name}</p>
+            <p className="text-gray-500 text-xs">Exercise {activeExerciseIndex + 1} of {activeRoutine.exercises.length}</p>
+          </div>
+          <button onClick={exitRoutine} className="text-gray-600 text-sm">Exit</button>
+        </div>
+
+        <div className="flex gap-1">
+          {activeRoutine.exercises.map((_: any, i: number) => (
+            <div key={i} className={`h-1 flex-1 rounded-full ${i < activeExerciseIndex ? 'bg-teal-500' : i === activeExerciseIndex ? 'bg-teal-400' : 'bg-gray-800'}`} />
+          ))}
+        </div>
+
+        <div className="flex justify-center py-4">
+          <div className="relative w-28 h-28">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#1f2937" strokeWidth="8" />
+              <circle cx="50" cy="50" r="45" fill="none" stroke={isResting ? '#6366f1' : '#2dd4bf'} strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - progress)} className="transition-all duration-1000" />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-white text-2xl font-bold">{formatTime(timeLeft)}</span>
+              <span className="text-gray-500 text-xs">{isResting ? 'Rest' : 'Go'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className={`rounded-xl p-4 ${isResting ? 'bg-indigo-950/40 border border-indigo-700/30' : 'bg-gray-800'}`}>
+          <p className={`font-semibold text-sm mb-1 ${isResting ? 'text-indigo-300' : 'text-white'}`}>
+            {isResting ? '💤 Rest' : exercise.name}
+          </p>
+          <p className="text-gray-400 text-xs leading-relaxed">
+            {isResting ? 'Breathe. Next up soon.' : exercise.instruction}
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={() => setIsRunning(p => !p)} className="flex-1 bg-teal-500 text-gray-950 font-bold py-3 rounded-xl text-lg">
+            {isRunning ? '⏸' : '▶'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Strip browser ──
+  return (
+    <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-white font-semibold text-sm">⚡ Quick routines</p>
+        <span className="text-gray-600 text-xs">Tap to start</span>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-1">
+        {filteredRoutines.map((routine, i) => (
+          <button
+            key={routine.id}
+            onClick={() => startRoutine(routine)}
+            className="flex-shrink-0 bg-gray-800 border border-gray-700 rounded-xl p-3 text-left transition hover:border-teal-700/40"
+            style={{ minWidth: 120 }}
+          >
+            <div className="text-xl mb-2">{CATEGORY_META[routine.category].icon}</div>
+            <p className="text-white text-xs font-semibold leading-tight mb-1">{routine.name}</p>
+            <p className="text-gray-600 text-xs">{routine.duration} mins</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── COMMUNITY ─────────────────────────────────────────────
+function CommunityView({ user, profile }: { user: User, profile: any }) {
+  const [posts, setPosts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [composing, setComposing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [role, setRole] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [filter, setFilter] = useState<string | null>(null)
+  const [hearts, setHearts] = useState<Set<string>>(new Set())
+
+  const todayShift = profile?.pattern_data
+    ? getTodayShift(profile.pattern_data as PatternData)
+    : null
+
+  const shiftTag = todayShift?.isOff ? 'Rest day' : (todayShift?.label ? `${todayShift.label} shift` : 'Shift worker')
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Anonymous'
+
+  const fetchPosts = async () => {
+    let query = supabase
+      .from('shiftwell_community_posts')
+      .select('*')
+      .eq('hidden', false)
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    if (filter) query = query.eq('shift_type', filter)
+
+    const { data } = await query
+    setPosts(data || [])
+
+    // fetch user's hearts
+    const { data: myHearts } = await supabase
+      .from('shiftwell_community_hearts')
+      .select('post_id')
+      .eq('user_id', user.id)
+    setHearts(new Set(myHearts?.map(h => h.post_id) || []))
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchPosts() }, [filter])
+
+  const handlePost = async () => {
+    if (!draft.trim()) return
+    setSaving(true)
+    const { error } = await supabase
+      .from('shiftwell_community_posts')
+      .insert({
+        user_id: user.id,
+        content: draft.trim(),
+        shift_type: shiftTag,
+        first_name: firstName,
+        role: role.trim() || null,
+      })
+    if (!error) {
+      setDraft('')
+      setComposing(false)
+      fetchPosts()
+    }
+    setSaving(false)
+  }
+
+  const toggleHeart = async (postId: string) => {
+    const isHearted = hearts.has(postId)
+    if (isHearted) {
+      await supabase.from('shiftwell_community_hearts').delete()
+        .eq('post_id', postId).eq('user_id', user.id)
+      setHearts(prev => { const n = new Set(prev); n.delete(postId); return n })
+    } else {
+      await supabase.from('shiftwell_community_hearts').insert({ post_id: postId, user_id: user.id })
+      setHearts(prev => new Set([...prev, postId]))
+    }
+    fetchPosts()
+  }
+
+  const handleFlag = async (postId: string) => {
+    await supabase.from('shiftwell_community_reports').upsert(
+      { post_id: postId, user_id: user.id },
+      { onConflict: 'post_id,user_id' }
+    )
+    // Auto-hide if 3+ reports
+    await supabase.rpc('increment_flag_count', { post_id: postId })
+  }
+
+  const formatTime = (iso: string) => {
+    const diff = Date.now() - new Date(iso).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 60) return `${mins}m ago`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h ago`
+    return `${Math.floor(hrs / 24)}d ago`
+  }
+
+  const SHIFT_FILTERS = ['Early shift', 'Late shift', 'Night shift', 'Rest day']
+
+  return (
+    <div className="space-y-4 max-w-lg mx-auto">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Community</h2>
+          <p className="text-gray-500 text-xs mt-0.5">Shift workers only 🌙</p>
+        </div>
+        <button
+          onClick={() => setComposing(!composing)}
+          className="bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold px-4 py-2 rounded-lg text-sm transition"
+        >
+          + Post
+        </button>
+      </div>
+
+      {/* Filter pills */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <button
+          onClick={() => setFilter(null)}
+          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition border ${
+            !filter ? 'bg-teal-900/60 text-teal-400 border-teal-700/40' : 'bg-gray-800 text-gray-500 border-gray-700'
+          }`}
+        >All shifts</button>
+        {SHIFT_FILTERS.map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(filter === f ? null : f)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition border ${
+              filter === f ? 'bg-teal-900/60 text-teal-400 border-teal-700/40' : 'bg-gray-800 text-gray-500 border-gray-700'
+            }`}
+          >{f}</button>
+        ))}
+      </div>
+
+      {/* Compose box */}
+      {composing && (
+        <div className="bg-gray-900 border border-teal-700/30 rounded-2xl p-4 space-y-3">
+          <input
+            type="text"
+            value={role}
+            onChange={e => setRole(e.target.value)}
+            placeholder="Your role (e.g. ICU Nurse, Paramedic) — optional"
+            className="w-full bg-gray-800 text-white rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-600"
+          />
+          <textarea
+            value={draft}
+            onChange={e => setDraft(e.target.value.slice(0, 500))}
+            placeholder="What's on your mind? Night 3 rough? Rest day win? Share it."
+            rows={3}
+            className="w-full bg-gray-800 text-white rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-600 resize-none"
+          />
+          <div className="flex items-center justify-between">
+            <div style={{
+              background: 'rgba(45,212,191,0.1)',
+              border: '1px solid rgba(45,212,191,0.2)',
+              borderRadius: 20, padding: '3px 10px',
+              fontSize: 11, color: '#2dd4bf',
+            }}>
+              {shiftTag}
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-gray-700 text-xs">{draft.length}/500</span>
+              <button
+                onClick={handlePost}
+                disabled={!draft.trim() || saving}
+                className="bg-teal-500 text-gray-950 font-semibold px-4 py-2 rounded-lg text-sm transition disabled:opacity-40"
+              >
+                {saving ? 'Posting...' : 'Post'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Posts */}
+      {loading ? (
+        <div className="space-y-3">
+          {[1,2,3].map(i => <div key={i} className="bg-gray-900 rounded-2xl h-24 animate-pulse border border-gray-800" />)}
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-800">
+          <div className="text-4xl mb-3">💬</div>
+          <p className="text-white font-semibold text-sm mb-1">Be the first to post</p>
+          <p className="text-gray-500 text-xs">Share how your shift is going. Someone out there is going through the same thing.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {posts.map(post => {
+          const heartCount = 0
+            const isHearted = hearts.has(post.id)
+            const isOwn = post.user_id === user.id
+            return (
+              <div key={post.id} className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-white text-sm font-semibold">{post.first_name}</span>
+                    {post.role && <span className="text-gray-500 text-xs">· {post.role}</span>}
+                    <span style={{
+                      background: 'rgba(45,212,191,0.08)',
+                      border: '1px solid rgba(45,212,191,0.2)',
+                      borderRadius: 20, padding: '1px 8px',
+                      fontSize: 10, color: '#2dd4bf', fontWeight: 600,
+                    }}>{post.shift_type}</span>
+                  </div>
+                  <span className="text-gray-700 text-xs flex-shrink-0">{formatTime(post.created_at)}</span>
+                </div>
+
+                <p className="text-gray-300 text-sm leading-relaxed mb-3 font-light">{post.content}</p>
+
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => toggleHeart(post.id)}
+                    className="flex items-center gap-1.5 transition"
+                  >
+                    <span className="text-base">{isHearted ? '❤️' : '🤍'}</span>
+                    <span className={`text-xs font-semibold ${isHearted ? 'text-red-400' : 'text-gray-600'}`}>
+                      {heartCount}
+                    </span>
+                  </button>
+                  {!isOwn && (
+                    <button onClick={() => handleFlag(post.id)} className="text-gray-800 hover:text-gray-600 text-xs transition ml-auto">
+                      Report
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
