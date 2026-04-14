@@ -205,16 +205,17 @@ export default function Landing() {
               ))}
             </div>
 
-            {/* Shift Journal — full width */}
+            {/* Community — full width */}
             <div className="feature-card" style={{
-              background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
+              background: 'linear-gradient(135deg, rgba(45,212,191,0.06), rgba(99,102,241,0.04))',
+              border: '1px solid rgba(45,212,191,0.15)',
               borderRadius: 16, padding: 22, display: 'flex', alignItems: 'flex-start', gap: 18
             }}>
-              <div style={{ fontSize: 28, flexShrink: 0, marginTop: 2 }}>📓</div>
+              <div style={{ fontSize: 28, flexShrink: 0, marginTop: 2 }}>🌙</div>
               <div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>Shift Journal</div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>A Community That's Awake When You Are</div>
                 <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.6, fontWeight: 300 }}>
-                  Log how each shift felt in one tap. Over time, ShiftWell surfaces your personal patterns — so "Night 3 is always rough" stops being a feeling and becomes something you can actually prove.
+                  3am and everyone's asleep. In the ShiftWell community, someone else is always on shift. Post how your night's going. Heart someone else's. Know you're not alone.
                 </div>
               </div>
             </div>
@@ -270,7 +271,8 @@ export default function Landing() {
                     'Food timing + dietary preferences',
                     '3am companion chat',
                     'Routines & exercises',
-                    'Shift journal & pattern tracking',
+      'Shift journal & pattern tracking',
+      'Community feed — shift workers only',
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
                       <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
@@ -294,7 +296,8 @@ export default function Landing() {
                     'Food timing + dietary preferences',
                     '3am companion chat',
                     'Routines & exercises',
-                    'Shift journal & pattern tracking',
+      'Shift journal & pattern tracking',
+      'Community feed — shift workers only',
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
                       <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
