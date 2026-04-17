@@ -46,10 +46,16 @@ export default function Dashboard() {
         : null
 
       const trialExpired = trialEnd && trialEnd < new Date()
-      const isActive = status === 'active' || status === 'trialing'
       const isCanceled = status === 'canceled' || status === 'past_due'
 
-      if (isCanceled || (trialExpired && status !== 'active')) {
+      // Catch users who never completed Stripe checkout
+      const createdAt = profile?.created_at ? new Date(profile.created_at) : null
+      const accountAgeMinutes = createdAt
+        ? (Date.now() - createdAt.getTime()) / 60000
+        : 0
+      const noStripeCustomer = !profile?.stripe_customer_id && accountAgeMinutes > 60
+
+      if (isCanceled || (trialExpired && status !== 'active') || noStripeCustomer) {
         router.push('/subscribe?expired=true')
         return
       }
