@@ -20,7 +20,7 @@ export default function Register() {
       email,
       password,
       options: {
-        data: { full_name: name }
+        data: { full_name: name, app: 'shiftwell' }
       }
     })
 
