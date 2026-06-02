@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import ShiftWellDemo from '../components/ShiftWellDemo'
+import { Plus_Jakarta_Sans } from 'next/font/google'
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+})
 
 export default function Landing() {
   const starsRef = useRef<HTMLDivElement>(null)
@@ -34,9 +40,6 @@ export default function Landing() {
         <title>ShiftWell — Built for Shift Workers</title>
         <meta name="description" content="ShiftWell is a wellness app built for shift workers. Sleep guidance, food timing and AI coaching that actually fits your rotation — not a 9-to-5." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
         <style>{`
           @keyframes twinkle {
             0%, 100% { opacity: var(--min-op, 0.1); }
@@ -85,10 +88,10 @@ export default function Landing() {
       }} />
       <div ref={starsRef} style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }} />
 
-      <div style={{ position: 'relative', zIndex: 1, color: '#f3f4f6', fontFamily: "'DM Sans', sans-serif", minHeight: '100vh' }}>
+      <div style={{ position: 'relative', zIndex: 1, color: '#f3f4f6', fontFamily: jakarta.style.fontFamily, minHeight: '100vh' }}>
 
         <nav style={{ padding: '24px 24px 0', maxWidth: 720, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontFamily: jakarta.style.fontFamily, fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="logo-dot" style={{ width: 8, height: 8, borderRadius: '50%', background: '#2dd4bf', flexShrink: 0 }} />
             ShiftWell
           </div>
@@ -96,7 +99,7 @@ export default function Landing() {
             <Link href="/login" style={{ color: '#9ca3af', fontSize: 14, textDecoration: 'none', fontWeight: 400 }}>Sign in</Link>
             <Link href="/register" className="cta-primary" style={{
               background: '#2dd4bf', color: '#090c14', borderRadius: 10, padding: '9px 18px',
-              fontSize: 13, fontWeight: 700, fontFamily: "'Syne', sans-serif",
+              fontSize: 13, fontWeight: 700, fontFamily: jakarta.style.fontFamily,
               textDecoration: 'none', whiteSpace: 'nowrap'
             }}>Start free trial</Link>
           </div>
@@ -114,7 +117,7 @@ export default function Landing() {
           </div>
 
           <h1 style={{
-            fontFamily: "'Syne', sans-serif", fontSize: 'clamp(28px, 6vw, 48px)',
+            fontFamily: jakarta.style.fontFamily, fontSize: 'clamp(28px, 6vw, 48px)',
             fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.5px',
             marginBottom: 24, color: '#ffffff', padding: '0 16px'
           }}>
@@ -131,7 +134,7 @@ export default function Landing() {
             <Link href="/register" className="cta-primary" style={{
               display: 'inline-block', background: '#2dd4bf', color: '#090c14',
               borderRadius: 12, padding: '16px 40px',
-              fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, textDecoration: 'none',
+              fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 16, textDecoration: 'none',
             }}>Start your free 14-day trial →</Link>
             <p style={{ fontSize: 12, color: '#6b7280' }}>Free for 14 days. Cancel before then and pay nothing.</p>
           </div>
@@ -153,7 +156,7 @@ export default function Landing() {
 
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 24px' }}>
 
-          <Divider label="The Problem" />
+          <Divider label="The Problem" jakarta={jakarta.style.fontFamily} />
 
           <div className="fade-up-2" style={{
             background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
@@ -169,7 +172,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <Divider label="What You Get" />
+          <Divider label="What You Get" jakarta={jakarta.style.fontFamily} />
 
           <div className="fade-up-3" style={{ marginBottom: 64 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginBottom: 14 }}>
@@ -199,13 +202,12 @@ export default function Landing() {
                   background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 22
                 }}>
                   <div style={{ fontSize: 22, marginBottom: 10 }}>{f.icon}</div>
-                  <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>{f.title}</div>
+                  <div style={{ fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>{f.title}</div>
                   <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.6, fontWeight: 300 }}>{f.desc}</div>
                 </div>
               ))}
             </div>
 
-            {/* Community — full width */}
             <div className="feature-card" style={{
               background: 'linear-gradient(135deg, rgba(45,212,191,0.06), rgba(99,102,241,0.04))',
               border: '1px solid rgba(45,212,191,0.15)',
@@ -213,7 +215,7 @@ export default function Landing() {
             }}>
               <div style={{ fontSize: 28, flexShrink: 0, marginTop: 2 }}>🌙</div>
               <div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>A Community That's Awake When You Are</div>
+                <div style={{ fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#f3f4f6' }}>A Community That's Awake When You Are</div>
                 <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.6, fontWeight: 300 }}>
                   3am and everyone's asleep. In the ShiftWell community, someone else is always on shift. Post how your night's going. Heart someone else's. Know you're not alone.
                 </div>
@@ -221,7 +223,6 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Builder note */}
           <div className="fade-up-4" style={{
             background: 'linear-gradient(135deg, rgba(245,158,11,0.06), rgba(45,212,191,0.06))',
             border: '1px solid rgba(255,255,255,0.08)',
@@ -233,7 +234,7 @@ export default function Landing() {
             <div style={{ marginTop: 16, fontSize: 13, color: '#9ca3af' }}>— Jonny, Founder & fellow shift worker 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
           </div>
 
-          <Divider label="Try it yourself" />
+          <Divider label="Try it yourself" jakarta={jakarta.style.fontFamily} />
 
           <div className="fade-up-5" style={{ marginBottom: 64 }}>
             <p style={{ textAlign: 'center', fontSize: 14, color: '#9ca3af', marginBottom: 24, fontWeight: 300 }}>
@@ -242,7 +243,7 @@ export default function Landing() {
             <ShiftWellDemo />
           </div>
 
-          <Divider label="Pricing" />
+          <Divider label="Pricing" jakarta={jakarta.style.fontFamily} />
 
           <div className="fade-up-5" style={{ marginBottom: 64 }}>
             <p style={{ textAlign: 'center', fontSize: 15, color: '#9ca3af', marginBottom: 32, fontWeight: 300 }}>
@@ -260,7 +261,7 @@ export default function Landing() {
                   <div style={{ background: '#fbbf24', color: '#090c14', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20 }}>Best value</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£59.99</span>
+                  <span style={{ fontFamily: jakarta.style.fontFamily, fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£59.99</span>
                   <span style={{ fontSize: 14, color: '#6b7280' }}>/year</span>
                 </div>
                 <div style={{ fontSize: 13, color: '#2dd4bf', marginBottom: 24, fontWeight: 500 }}>That's £5/month — you save £36 a year</div>
@@ -271,8 +272,8 @@ export default function Landing() {
                     'Food timing + dietary preferences',
                     '3am companion chat',
                     'Routines & exercises',
-      'Shift journal & pattern tracking',
-      'Community feed — shift workers only',
+                    'Shift journal & pattern tracking',
+                    'Community feed — shift workers only',
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
                       <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
@@ -286,7 +287,7 @@ export default function Landing() {
               }}>
                 <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 600, marginBottom: 16 }}>Monthly</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 24 }}>
-                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£7.99</span>
+                  <span style={{ fontFamily: jakarta.style.fontFamily, fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£7.99</span>
                   <span style={{ fontSize: 14, color: '#6b7280' }}>/month</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -296,8 +297,8 @@ export default function Landing() {
                     'Food timing + dietary preferences',
                     '3am companion chat',
                     'Routines & exercises',
-      'Shift journal & pattern tracking',
-      'Community feed — shift workers only',
+                    'Shift journal & pattern tracking',
+                    'Community feed — shift workers only',
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
                       <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
@@ -320,7 +321,7 @@ export default function Landing() {
 
           <div className="fade-up-5" style={{ textAlign: 'center', padding: '0 0 80px' }}>
             <h2 style={{
-              fontFamily: "'Syne', sans-serif", fontWeight: 800,
+              fontFamily: jakarta.style.fontFamily, fontWeight: 800,
               fontSize: 'clamp(22px, 4.5vw, 34px)', letterSpacing: '-0.5px',
               marginBottom: 16, lineHeight: 1.3, padding: '0 16px'
             }}>
@@ -330,7 +331,7 @@ export default function Landing() {
             <Link href="/register" className="cta-primary" style={{
               display: 'inline-block', background: '#2dd4bf', color: '#090c14',
               borderRadius: 12, padding: '16px 40px',
-              fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, textDecoration: 'none'
+              fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 16, textDecoration: 'none'
             }}>Start free trial →</Link>
             <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
               Already have an account?{' '}
@@ -357,11 +358,11 @@ export default function Landing() {
   )
 }
 
-function Divider({ label }: { label: string }) {
+function Divider({ label, jakarta }: { label: string, jakarta: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '56px 0 48px' }}>
       <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent)' }} />
-      <span style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</span>
+      <span style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#9ca3af', fontWeight: 500, whiteSpace: 'nowrap', fontFamily: jakarta }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent)' }} />
     </div>
   )
