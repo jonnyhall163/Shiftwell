@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const session = await stripe.billingPortal.sessions.create({
     customer: profile.stripe_customer_id,
-    return_url: `${req.headers.origin}/dashboard`,
+    return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`,
     configuration: 'bpc_1TEciZBNgU0d5dDqds8K9A6D',
   })
 

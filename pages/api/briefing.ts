@@ -38,9 +38,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (error || !profile) return res.status(404).json({ error: 'Profile not found' })
 
+  if (profile.subscription_status !== 'active' && profile.subscription_status !== 'trialing') {
+    return res.status(403).json({ error: 'Subscription required' })
+  }
+
   // ── Time block cache key ─────────────────────────────
   const now = req.body.localTime ? new Date(req.body.localTime) : new Date()
-  const hour = now.getHours()
+  const hour = typeof req.body.localHour === 'number' ? req.body.localHour : now.getHours()
   const todayDate = (req.body.localDate as string) || new Date().toISOString().split('T')[0]
   const timeBlock = getTimeBlock(hour)
   const cacheKey = `${todayDate}-${timeBlock}`

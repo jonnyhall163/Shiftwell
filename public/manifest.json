@@ -1,0 +1,16 @@
+{
+  "name": "ShiftWell",
+  "short_name": "ShiftWell",
+  "description": "ShiftWell is a wellness app built for shift workers — sleep, food timing and AI coaching that fits your rotation.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#2dd4bf",
+  "icons": [
+    {
+      "src": "/icon.jpg",
+      "sizes": "128x128",
+      "type": "image/jpeg"
+    }
+  ]
+}

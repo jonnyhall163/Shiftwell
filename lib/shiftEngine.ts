@@ -46,6 +46,21 @@ export interface TodayShift {
 
 // ── Engine ───────────────────────────────────────────────
 
+// Parses a "YYYY-MM-DD" string as a local-midnight Date, avoiding the UTC
+// parsing that `new Date(dateString)` applies to date-only ISO strings.
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+// Whole calendar days between two dates, computed from their Y/M/D components
+// so DST transitions between `from` and `to` can never shift the result by an hour.
+function daysBetween(from: Date, to: Date): number {
+  const utcFrom = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate())
+  const utcTo = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate())
+  return Math.round((utcTo - utcFrom) / (1000 * 60 * 60 * 24))
+}
+
 export function getTodayShift(patternData: PatternData): TodayShift {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -82,11 +97,8 @@ export function getTodayShift(patternData: PatternData): TodayShift {
   }
 
   if (patternData.type === 'fixed') {
-    const start = new Date(patternData.startDate)
-    start.setHours(0, 0, 0, 0)
-
-    const diffMs = today.getTime() - start.getTime()
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const start = parseLocalDate(patternData.startDate)
+    const diffDays = daysBetween(start, today)
     const dayInCycle = ((diffDays % patternData.cycleLength) + patternData.cycleLength) % patternData.cycleLength
 
     const shiftIndex = patternData.rotation[dayInCycle]
@@ -153,11 +165,8 @@ export function getUpcomingShifts(patternData: PatternData, days: number = 7): T
     }
 
     if (patternData.type === 'fixed') {
-      const start = new Date(patternData.startDate)
-      start.setHours(0, 0, 0, 0)
-
-      const diffMs = date.getTime() - start.getTime()
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+      const start = parseLocalDate(patternData.startDate)
+      const diffDays = daysBetween(start, date)
       const dayInCycle = ((diffDays % patternData.cycleLength) + patternData.cycleLength) % patternData.cycleLength
 
       const shiftIndex = patternData.rotation[dayInCycle]
