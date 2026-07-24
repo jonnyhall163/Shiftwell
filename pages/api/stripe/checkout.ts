@@ -59,8 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     subscription_data: {
       trial_period_days: 14,
     },
-    success_url: `${req.headers.origin}/dashboard?subscribed=true`,
-    cancel_url: `${req.headers.origin}/subscribe`,
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?subscribed=true`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe`,
     allow_promotion_codes: true,
   })
 

@@ -33,6 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .eq('id', user.id)
     .single()
 
+  if (!profile || (profile.subscription_status !== 'active' && profile.subscription_status !== 'trialing')) {
+    return res.status(403).json({ error: 'Subscription required' })
+  }
+
   const name = profile?.full_name?.split(' ')[0] || 'there'
   const now = new Date()
   const hour = now.getHours()

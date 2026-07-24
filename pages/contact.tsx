@@ -1,4 +1,32 @@
+import { useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
+
 export default function Contact() {
+  const [loadingPortal, setLoadingPortal] = useState(false)
+
+  const handleManageSubscription = async () => {
+    setLoadingPortal(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      window.location.href = '/login'
+      return
+    }
+    const res = await fetch('/api/stripe/portal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    })
+    const data = await res.json()
+    if (data.url) {
+      window.location.href = data.url
+    } else {
+      alert('Something went wrong. Please try again.')
+      setLoadingPortal(false)
+    }
+  }
+
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px', fontFamily: 'sans-serif', color: '#e2e8f0', background: '#0f172a', minHeight: '100vh' }}>
       <a href="/" style={{ color: '#2dd4bf', textDecoration: 'none', fontSize: 14 }}>← Back to ShiftWell</a>
@@ -15,7 +43,13 @@ export default function Contact() {
       <div style={{ background: '#1e293b', borderRadius: 12, padding: 32, marginBottom: 24 }}>
         <h2 style={{ color: '#f59e0b', marginTop: 0 }}>Billing & subscriptions</h2>
         <p>To manage, change or cancel your subscription, use the Customer Portal:</p>
-        <a href="/api/customer-portal" style={{ display: 'inline-block', marginTop: 8, background: '#2dd4bf', color: '#0f172a', padding: '10px 20px', borderRadius: 8, fontWeight: 'bold', textDecoration: 'none' }}>Manage Subscription</a>
+        <button
+          onClick={handleManageSubscription}
+          disabled={loadingPortal}
+          style={{ display: 'inline-block', marginTop: 8, background: '#2dd4bf', color: '#0f172a', padding: '10px 20px', borderRadius: 8, fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: 16, opacity: loadingPortal ? 0.6 : 1 }}
+        >
+          {loadingPortal ? 'Loading...' : 'Manage Subscription'}
+        </button>
         <p style={{ marginTop: 16 }}>Or email us at <a href="mailto:hello@getshiftwell.com" style={{ color: '#2dd4bf' }}>hello@getshiftwell.com</a></p>
       </div>
 

@@ -260,6 +260,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
             userId: user.id,
             localTime: new Date().toISOString(),
             localDate: new Date().toLocaleDateString('en-CA'), // gives YYYY-MM-DD in local time
+            localHour: new Date().getHours(), // user's local hour, not the server's
           }),
         })
         const data = await res.json()
@@ -274,7 +275,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
     fetchBriefing()
 
     const fetchJournalEntry = async () => {
-      const today = new Date().toISOString().split('T')[0]
+      const today = new Date().toLocaleDateString('en-CA')
       const { data } = await supabase
         .from('shiftwell_journal')
         .select('*')
@@ -400,7 +401,7 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
         existingEntry={journalEntry}
         onSaved={(newStreak?: number) => {
           if (newStreak !== undefined) setStreak(newStreak)
-          const today = new Date().toISOString().split('T')[0]
+          const today = new Date().toLocaleDateString('en-CA')
           supabase
             .from('shiftwell_journal')
             .select('*')
@@ -739,7 +740,7 @@ function HydrationCard({ user, profile, onUpdate }: { user: User, profile: any, 
   const goal = 8
 
   useEffect(() => {
-    const todayDate = new Date().toISOString().split('T')[0]
+    const todayDate = new Date().toLocaleDateString('en-CA')
     if (profile?.hydration_date === todayDate) {
       setCount(profile?.hydration_count || 0)
     } else {
@@ -750,7 +751,7 @@ function HydrationCard({ user, profile, onUpdate }: { user: User, profile: any, 
   const updateCount = async (newCount: number) => {
     if (newCount < 0 || newCount > 20) return
     setSaving(true)
-    const todayDate = new Date().toISOString().split('T')[0]
+    const todayDate = new Date().toLocaleDateString('en-CA')
 
     await supabase
       .from('shiftwell_profiles')
@@ -2034,7 +2035,7 @@ function CommunityView({ user, profile }: { user: User, profile: any }) {
                             </button>
                             <button
                               onClick={async () => {
-                                await supabase.from('shiftwell_community_posts').delete().eq('id', post.id)
+                                await supabase.from('shiftwell_community_posts').delete().eq('id', post.id).eq('user_id', user.id)
                                 setOpenMenu(null)
                                 fetchPosts()
                               }}
@@ -2064,6 +2065,7 @@ function CommunityView({ user, profile }: { user: User, profile: any }) {
                           await supabase.from('shiftwell_community_posts')
                             .update({ content: editDraft.trim() })
                             .eq('id', post.id)
+                            .eq('user_id', user.id)
                           setEditingPost(null)
                           setEditDraft('')
                           fetchPosts()
