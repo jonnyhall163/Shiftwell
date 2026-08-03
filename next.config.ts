@@ -23,6 +23,15 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache',
+          },
+        ],
+      },
     ]
   },
 };

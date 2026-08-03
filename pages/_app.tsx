@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { AppProps } from 'next/app'
 import '../styles/globals.css'
 import Script from 'next/script'
@@ -5,6 +6,14 @@ import Head from 'next/head'
 import ErrorBoundary from '../components/ErrorBoundary'
 
 export default function MyApp({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.error('Service worker registration failed:', err)
+      })
+    }
+  }, [])
+
   return (
     <>
       <Head>
