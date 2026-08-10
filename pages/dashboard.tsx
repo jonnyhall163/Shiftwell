@@ -170,11 +170,22 @@ export default function Dashboard() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
-        {activeTab === 'today'    && <TodayView user={user} profile={profile} />}
+        {activeTab === 'today'    && <TodayView user={user} profile={profile} onNavigate={setActiveTab} />}
         {activeTab === 'sleep'    && <SleepView user={user} />}
         {activeTab === 'food' && <FoodView profile={profile} />}
         {activeTab === 'community' && <CommunityView user={user} profile={profile} />}
         {activeTab === 'companion' && <CompanionView user={user} profile={profile} />}
+        {activeTab === 'routines' && (
+          <div className="max-w-lg mx-auto space-y-4">
+            <button
+              onClick={() => setActiveTab('today')}
+              className="text-teal-400 text-sm hover:text-teal-300 transition"
+            >
+              ← Back to Today
+            </button>
+            <RoutinesView user={user} profile={profile} />
+          </div>
+        )}
       </main>
 
       {/* Bottom nav */}
@@ -197,7 +208,7 @@ export default function Dashboard() {
 }
 
 // ── TODAY ────────────────────────────────────────────────
-function TodayView({ user, profile }: { user: User, profile: any }) {
+function TodayView({ user, profile, onNavigate }: { user: User, profile: any, onNavigate: (tab: string) => void }) {
   const [briefing, setBriefing] = useState<string>('')
   const [loadingBriefing, setLoadingBriefing] = useState(true)
   const [todayShift, setTodayShift] = useState<TodayShift | null>(null)
@@ -310,22 +321,39 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
     
   }, [])
 
+  const rotationSuffix = todayShift?.dayInCycle ? ` · Day ${todayShift.dayInCycle}` : ''
+
   return (
     <div className="space-y-5 max-w-lg mx-auto">
-      <div>
-        <h2 className="text-2xl font-bold text-white">{greeting}, {name} 👋</h2>
-        <p className="text-gray-500 text-sm mt-1">
-          {todayShift
-            ? todayShift.isOff
-              ? 'Rest day — make it count'
-              : `${todayShift.label} shift · ${formatShiftTime(todayShift.startTime, todayShift.endTime)}`
-            : "Here's your shift wellness briefing"
-          }
-        </p>
+      {/* Greeting row */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold text-white">{greeting}, {name} 👋</h2>
+          <p className="text-gray-500 text-sm mt-1">
+            {todayShift
+              ? todayShift.isOff
+                ? `Rest day — make it count${rotationSuffix}`
+                : `${todayShift.label} shift · ${formatShiftTime(todayShift.startTime, todayShift.endTime)}${rotationSuffix}`
+              : "Here's your shift wellness briefing"
+            }
+          </p>
+        </div>
+        {streak > 0 && (
+          <div className="flex-shrink-0 flex items-center gap-1.5 bg-amber-900/20 border border-amber-700/40 rounded-full px-3 py-1.5">
+            <span className="text-sm leading-none">🔥</span>
+            <span className="text-amber-400 font-bold text-sm leading-none">{streak}</span>
+          </div>
+        )}
       </div>
 
-      {/* AI Briefing card */}
-      <div className="bg-teal-950/60 border border-teal-700/30 rounded-2xl p-5">
+      {/* AI Briefing card — hero */}
+      <div
+        className="bg-teal-950/60 rounded-[24px] p-6"
+        style={{
+          border: '1px solid rgba(45,212,191,0.35)',
+          boxShadow: '0 0 32px rgba(45,212,191,0.12)',
+        }}
+      >
         <div className="flex items-center gap-2 mb-3">
           <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-xs">✦</div>
           <span className="text-teal-300 font-semibold text-sm">ShiftWell AI</span>
@@ -341,29 +369,26 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
         )}
       </div>
 
-      {/* Streak card */}
-      <StreakCard streak={streak} />
+      {/* Next action */}
+      <NextActionCard
+        icon="🌙"
+        label="Log last night's sleep"
+        subtext="Takes 10 seconds"
+        onClick={() => onNavigate('sleep')}
+      />
 
-      {/* Quick stats grid */}
+      {/* Compact stats row */}
       <div className="grid grid-cols-2 gap-3">
         {[
-      { label: 'Sleep (24hrs)', value: sleepStat, icon: '🌙' },
-      { label: 'Next meal', value: nextMeal, icon: '🍽️' },
-          {
-            label: 'Today',
-            value: todayShift?.label || 'Not set',
-            icon: '🔄'
-          },
-          {
-            label: 'Hydration',
-            value: `${hydrationCount} / 8`,
-            icon: '💧'
-          },
+          { label: 'Sleep', value: sleepStat, icon: '🌙' },
+          { label: 'Next meal', value: nextMeal, icon: '🍽️' },
         ].map(card => (
-          <div key={card.label} className="bg-gray-900 rounded-xl p-4">
-            <div className="text-2xl mb-2">{card.icon}</div>
-            <div className="text-white font-semibold">{card.value}</div>
-            <div className="text-gray-500 text-xs mt-1">{card.label}</div>
+          <div key={card.label} className="bg-gray-900 rounded-xl px-3 py-2.5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs">{card.icon}</span>
+              <span className="text-gray-500 text-[11px]">{card.label}</span>
+            </div>
+            <div className="text-white font-semibold text-sm">{card.value}</div>
           </div>
         ))}
       </div>
@@ -375,24 +400,23 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
         onUpdate={(count) => setHydrationCount(count)}
       />
 
-      {/* Rotation position */}
-      {todayShift?.dayInCycle && (
-        <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-          <p className="text-white font-semibold text-sm mb-1">
-            📅 Day {todayShift.dayInCycle} of your rotation
-          </p>
-          <p className="text-gray-400 text-sm">
-            {todayShift.isOff
-              ? 'Rest day. Recovery is part of the job.'
-              : `${todayShift.label} shift today — ${formatShiftTime(todayShift.startTime, todayShift.endTime)}`
-            }
-          </p>
-        </div>
-      )}
-
       {/* Quick routines */}
-      <QuickRoutinesStrip profile={profile} />
-      
+      <QuickRoutinesStrip profile={profile} onSeeAll={() => onNavigate('routines')} />
+
+      {/* Community + Companion preview */}
+      <div className="grid grid-cols-2 gap-3">
+        <CommunityPreviewCard onNavigate={() => onNavigate('community')} />
+        <button
+          onClick={() => onNavigate('companion')}
+          className="bg-gray-900 rounded-2xl p-4 border border-gray-800 text-left hover:border-teal-700/40 transition"
+        >
+          <p className="text-gray-500 text-[10px] font-semibold tracking-wide mb-1.5">COMPANION</p>
+          <p className="text-gray-300 text-xs leading-snug">
+            Here if you need to talk. <span className="text-teal-400 font-medium">Say hi →</span>
+          </p>
+        </button>
+      </div>
+
       {/* Shift journal */}
       <ShiftJournalCard
         user={user}
@@ -412,6 +436,69 @@ function TodayView({ user, profile }: { user: User, profile: any }) {
         }}
       />
     </div>
+  )
+}
+
+// ── NEXT ACTION ──────────────────────────────────────────
+// Single suggested next step. Hardcoded to the sleep-log prompt for now;
+// structured so future variants (missing journal entry, hydration behind
+// goal, etc.) can be swapped in based on time of day / profile state.
+function NextActionCard({ icon, label, subtext, onClick }: {
+  icon: string
+  label: string
+  subtext: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full bg-gray-900 border border-gray-800 rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left hover:border-teal-700/40 transition"
+    >
+      <div className="w-9 h-9 rounded-full bg-teal-900/40 flex items-center justify-center text-base flex-shrink-0">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-semibold text-sm">{label}</p>
+        <p className="text-gray-500 text-xs">{subtext}</p>
+      </div>
+      <span className="text-gray-600 text-lg flex-shrink-0">→</span>
+    </button>
+  )
+}
+
+// ── COMMUNITY PREVIEW ────────────────────────────────────
+function CommunityPreviewCard({ onNavigate }: { onNavigate: () => void }) {
+  const [post, setPost] = useState<any>(null)
+
+  useEffect(() => {
+    const fetchLatest = async () => {
+      const { data } = await supabase
+        .from('shiftwell_community_posts')
+        .select('*')
+        .eq('hidden', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      setPost(data || null)
+    }
+    fetchLatest()
+  }, [])
+
+  return (
+    <button
+      onClick={onNavigate}
+      className="bg-gray-900 rounded-2xl p-4 border border-gray-800 text-left hover:border-teal-700/40 transition"
+    >
+      <p className="text-gray-500 text-[10px] font-semibold tracking-wide mb-1.5">COMMUNITY</p>
+      {post ? (
+        <p className="text-gray-300 text-xs leading-snug line-clamp-2">
+          <span className="text-teal-400 font-medium">{post.first_name}:</span>{' '}
+          "{post.content.length > 60 ? `${post.content.slice(0, 60)}…` : post.content}"
+        </p>
+      ) : (
+        <p className="text-gray-500 text-xs leading-snug">Be the first to share today.</p>
+      )}
+    </button>
   )
 }
 
@@ -770,17 +857,10 @@ function HydrationCard({ user, profile, onUpdate }: { user: User, profile: any, 
 
   return (
     <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <p className="text-white font-semibold">💧 Hydration</p>
-          <p className="text-gray-500 text-xs mt-0.5">
-            {count >= goal
-              ? 'Goal reached! Keep it up 💪'
-              : `${goal - count} more to hit your goal`}
-          </p>
-        </div>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-white font-semibold">💧 Hydration</p>
         <div className="text-right">
-          <span className="text-2xl font-bold text-white">{count}</span>
+          <span className="text-lg font-bold text-white">{count}</span>
           <span className="text-gray-500 text-sm"> / {goal}</span>
         </div>
       </div>
@@ -793,48 +873,13 @@ function HydrationCard({ user, profile, onUpdate }: { user: User, profile: any, 
         />
       </div>
 
-      {/* Glass indicators */}
-      <div className="grid grid-cols-8 gap-1.5 mb-4">
-        {Array.from({ length: goal }).map((_, i) => (
-          <button
-            key={i}
-            onClick={() => updateCount(i < count ? i : i + 1)}
-            disabled={saving}
-            className={`aspect-square rounded-lg flex items-center justify-center text-lg transition-colors ${
-              i < count
-                ? 'bg-teal-500/30 border border-teal-500/50'
-                : 'bg-gray-800 border border-gray-700'
-            }`}
-          >
-            <span className={i < count ? 'opacity-100' : 'opacity-30'}>💧</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Controls */}
-      <div className="flex gap-3">
-        <button
-          onClick={() => updateCount(count - 1)}
-          disabled={count === 0 || saving}
-          className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 rounded-lg transition disabled:opacity-30 text-lg"
-        >
-          −
-        </button>
-        <button
-          onClick={() => updateCount(count + 1)}
-          disabled={count >= 20 || saving}
-          className="flex-2 bg-teal-500 hover:bg-teal-400 text-gray-950 font-bold py-2 px-8 rounded-lg transition disabled:opacity-50 text-sm font-semibold"
-        >
-          + Add glass
-        </button>
-        <button
-          onClick={() => updateCount(count - 1)}
-          disabled={count === 0 || saving}
-          className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 rounded-lg transition disabled:opacity-30 text-lg"
-        >
-          −
-        </button>
-      </div>
+      <button
+        onClick={() => updateCount(count + 1)}
+        disabled={count >= 20 || saving}
+        className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-2.5 rounded-lg transition disabled:opacity-50 text-sm"
+      >
+        + Add glass
+      </button>
     </div>
   )
 }
@@ -1361,67 +1406,6 @@ function CompanionView({ user, profile }: { user: User, profile: any }) {
   )
 }
 
-// ── STREAK CARD ───────────────────────────────────────────
-function StreakCard({ streak }: { streak: number }) {
-  const getMessage = () => {
-    if (streak === 0) return 'Log your first shift to start your streak'
-    if (streak === 1) return 'Day 1 — you showed up'
-    if (streak < 7) return 'Building momentum — keep going'
-    if (streak < 14) return 'One week strong 💪'
-    if (streak < 28) return 'Two weeks in — this is becoming a habit'
-    if (streak < 60) return 'A month of showing up. Seriously impressive.'
-    return "You're unstoppable 🏆"
-  }
-
-  return (
-    <div style={{
-      background: streak > 0
-        ? 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(251,191,36,0.06))'
-        : 'rgba(17,24,39,0.8)',
-      border: streak > 0
-        ? '1px solid rgba(245,158,11,0.3)'
-        : '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 16,
-      padding: '16px 20px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 16,
-    }}>
-      <div style={{ fontSize: 36, lineHeight: 1 }}>
-        {streak === 0 ? '🔥' : streak >= 30 ? '🔥' : streak >= 7 ? '🔥' : '🔥'}
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{
-            fontFamily: 'system-ui, sans-serif',
-            fontWeight: 800,
-            fontSize: 32,
-            color: streak > 0 ? '#fbbf24' : '#4b5563',
-            lineHeight: 1,
-          }}>
-            {streak}
-          </span>
-          <span style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: streak > 0 ? '#f59e0b' : '#4b5563',
-          }}>
-            {streak === 1 ? 'day streak' : 'day streak'}
-          </span>
-        </div>
-        <p style={{
-          fontSize: 11,
-          color: streak > 0 ? '#d97706' : '#6b7280',
-          marginTop: 3,
-          fontWeight: 400,
-        }}>
-          {getMessage()}
-        </p>
-      </div>
-    </div>
-  )
-}
-
 // ── SHIFT JOURNAL ─────────────────────────────────────────
 function ShiftJournalCard({ user, profile, todayShift, existingEntry, onSaved }: {
   user: User
@@ -1619,7 +1603,7 @@ function ShiftJournalCard({ user, profile, todayShift, existingEntry, onSaved }:
 }
 
 // ── QUICK ROUTINES STRIP ──────────────────────────────────
-function QuickRoutinesStrip({ profile }: { profile: any }) {
+function QuickRoutinesStrip({ profile, onSeeAll }: { profile: any, onSeeAll?: () => void }) {
   const [activeRoutine, setActiveRoutine] = useState<any>(null)
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
   const [timeLeft, setTimeLeft] = useState(0)
@@ -1766,22 +1750,26 @@ function QuickRoutinesStrip({ profile }: { profile: any }) {
 
   // ── Strip browser ──
   return (
-    <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-gray-900 rounded-2xl p-3.5 border border-gray-800">
+      <div className="flex items-center justify-between mb-2.5">
         <p className="text-white font-semibold text-sm">⚡ Quick routines</p>
-        <span className="text-gray-600 text-xs">Tap to start</span>
+        {onSeeAll && (
+          <button onClick={onSeeAll} className="text-teal-400 text-xs font-medium hover:text-teal-300 transition">
+            See all
+          </button>
+        )}
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {filteredRoutines.map((routine, i) => (
           <button
             key={routine.id}
             onClick={() => startRoutine(routine)}
-            className="flex-shrink-0 bg-gray-800 border border-gray-700 rounded-xl p-3 text-left transition hover:border-teal-700/40"
-            style={{ minWidth: 120 }}
+            className="flex-shrink-0 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-left transition hover:border-teal-700/40"
+            style={{ minWidth: 108 }}
           >
-            <div className="text-xl mb-2">{CATEGORY_META[routine.category].icon}</div>
-            <p className="text-white text-xs font-semibold leading-tight mb-1">{routine.name}</p>
-            <p className="text-gray-600 text-xs">{routine.duration} mins</p>
+            <div className="text-base mb-1">{CATEGORY_META[routine.category].icon}</div>
+            <p className="text-white text-xs font-semibold leading-tight">{routine.name}</p>
+            <p className="text-gray-600 text-[10px] mt-0.5">{routine.duration} min</p>
           </button>
         ))}
       </div>
