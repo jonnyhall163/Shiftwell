@@ -17,10 +17,18 @@ const tabs = [
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('today')
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set(['today']))
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<any>(null)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const router = useRouter()
+
+  // Tabs stay mounted once visited (hidden via CSS, not unmounted) so
+  // switching tabs doesn't reset child state (e.g. hydration count) or
+  // re-fire mount-time fetches (e.g. the AI briefing) on every visit.
+  useEffect(() => {
+    setVisitedTabs(prev => (prev.has(activeTab) ? prev : new Set(prev).add(activeTab)))
+  }, [activeTab])
 
   useEffect(() => {
     const init = async () => {
@@ -170,20 +178,42 @@ export default function Dashboard() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-6">
-        {activeTab === 'today'    && <TodayView user={user} profile={profile} onNavigate={setActiveTab} />}
-        {activeTab === 'sleep'    && <SleepView user={user} />}
-        {activeTab === 'food' && <FoodView profile={profile} />}
-        {activeTab === 'community' && <CommunityView user={user} profile={profile} />}
-        {activeTab === 'companion' && <CompanionView user={user} profile={profile} />}
-        {activeTab === 'routines' && (
-          <div className="max-w-lg mx-auto space-y-4">
-            <button
-              onClick={() => setActiveTab('today')}
-              className="text-teal-400 text-sm hover:text-teal-300 transition"
-            >
-              ← Back to Today
-            </button>
-            <RoutinesView user={user} profile={profile} />
+        {visitedTabs.has('today') && (
+          <div className={activeTab === 'today' ? '' : 'hidden'}>
+            <TodayView user={user} profile={profile} onNavigate={setActiveTab} />
+          </div>
+        )}
+        {visitedTabs.has('sleep') && (
+          <div className={activeTab === 'sleep' ? '' : 'hidden'}>
+            <SleepView user={user} />
+          </div>
+        )}
+        {visitedTabs.has('food') && (
+          <div className={activeTab === 'food' ? '' : 'hidden'}>
+            <FoodView profile={profile} />
+          </div>
+        )}
+        {visitedTabs.has('community') && (
+          <div className={activeTab === 'community' ? '' : 'hidden'}>
+            <CommunityView user={user} profile={profile} />
+          </div>
+        )}
+        {visitedTabs.has('companion') && (
+          <div className={activeTab === 'companion' ? '' : 'hidden'}>
+            <CompanionView user={user} profile={profile} />
+          </div>
+        )}
+        {visitedTabs.has('routines') && (
+          <div className={activeTab === 'routines' ? '' : 'hidden'}>
+            <div className="max-w-lg mx-auto space-y-4">
+              <button
+                onClick={() => setActiveTab('today')}
+                className="text-teal-400 text-sm hover:text-teal-300 transition"
+              >
+                ← Back to Today
+              </button>
+              <RoutinesView user={user} profile={profile} />
+            </div>
           </div>
         )}
       </main>
