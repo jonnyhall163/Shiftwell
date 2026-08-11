@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import { captureReferralCodeFromUrl, getStoredReferralCode, clearStoredReferralCode } from '../lib/referral'
 
 // Profile row creation now happens server-side, via a DB trigger on
 // auth.users insert (see supabase/migrations/20260812000000_profile_on_signup_trigger.sql) —
@@ -32,6 +33,12 @@ export default function Register() {
   const [pendingUserId, setPendingUserId] = useState<string | null>(null)
   const router = useRouter()
 
+  useEffect(() => {
+    // In case someone lands directly on /register?ref=CODE without ever
+    // visiting the landing page first.
+    captureReferralCodeFromUrl()
+  }, [])
+
   const finishSetup = async (userId: string) => {
     // Belt-and-braces: the trigger should already have created the row, but
     // we do have a session at this point, so a client-side upsert is also
@@ -55,11 +62,13 @@ export default function Register() {
     setLoading(true)
     setError(null)
 
+    const referredBy = getStoredReferralCode()
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: name, app: 'shiftwell' }
+        data: { full_name: name, app: 'shiftwell', ...(referredBy ? { referred_by: referredBy } : {}) }
       }
     })
 
@@ -74,6 +83,11 @@ export default function Register() {
       setLoading(false)
       return
     }
+
+    // Signup succeeded — the code (if any) has been handed off in the auth
+    // metadata for the DB trigger to validate and record. Nothing more to
+    // do with it client-side either way.
+    clearStoredReferralCode()
 
     if (!data.session) {
       // Email confirmation is enabled — there's no session yet, so any

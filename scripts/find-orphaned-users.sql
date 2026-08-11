@@ -25,12 +25,17 @@ order by u.created_at desc;
 -- migrations/20260812000000_profile_on_signup_trigger.sql is applied, this
 -- backfill should only ever need to be run this one time for pre-existing
 -- affected accounts — new signups won't hit this bug again.
+--
+-- referral_code is required (NOT NULL) as of
+-- migrations/20260814000000_referral_system.sql — if you're running this
+-- before that migration, drop the referral_code column/value below.
 
--- insert into public.shiftwell_profiles (id, email, full_name)
+-- insert into public.shiftwell_profiles (id, email, full_name, referral_code)
 -- select
 --   u.id,
 --   u.email,
---   u.raw_user_meta_data ->> 'full_name'
+--   u.raw_user_meta_data ->> 'full_name',
+--   public.generate_referral_code()
 -- from auth.users u
 -- left join public.shiftwell_profiles p on p.id = u.id
 -- where p.id is null

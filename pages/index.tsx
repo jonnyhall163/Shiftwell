@@ -3,6 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import ShiftWellDemo from '../components/ShiftWellDemo'
 import { Plus_Jakarta_Sans } from 'next/font/google'
+import { captureReferralCodeFromUrl } from '../lib/referral'
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -11,6 +12,10 @@ const jakarta = Plus_Jakarta_Sans({
 
 export default function Landing() {
   const starsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    captureReferralCodeFromUrl()
+  }, [])
 
   useEffect(() => {
     if (!starsRef.current) return

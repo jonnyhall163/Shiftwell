@@ -150,6 +150,12 @@ export default function Dashboard() {
                     if (data.url) window.location.href = data.url
                   }
                 },
+                {
+                  label: 'Refer a friend',
+                  icon: '🎁',
+                  sub: 'Get a free month when they subscribe',
+                  onClick: () => { setActiveTab('referral'); setShowProfileMenu(false) }
+                },
               ].map((item, i) => (
                 <button
                   key={item.label}
@@ -213,6 +219,19 @@ export default function Dashboard() {
                 ← Back to Today
               </button>
               <RoutinesView user={user} profile={profile} />
+            </div>
+          </div>
+        )}
+        {visitedTabs.has('referral') && (
+          <div className={activeTab === 'referral' ? '' : 'hidden'}>
+            <div className="max-w-lg mx-auto space-y-4">
+              <button
+                onClick={() => setActiveTab('today')}
+                className="text-teal-400 text-sm hover:text-teal-300 transition"
+              >
+                ← Back to Today
+              </button>
+              <ReferralCard profile={profile} />
             </div>
           </div>
         )}
@@ -1284,6 +1303,93 @@ function RoutinesView({ user, profile }: { user: User, profile: any }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// ── REFERRAL ─────────────────────────────────────────────
+function ReferralCard({ profile }: { profile: any }) {
+  const [stats, setStats] = useState<{ signups: number, conversions: number } | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [referralLink, setReferralLink] = useState('')
+
+  useEffect(() => {
+    // Computed in an effect (not inline during render) so server-rendered
+    // and initial-client-render output always match — this card is only
+    // ever reached post-hydration in practice, but this way it doesn't
+    // depend on that staying true.
+    if (profile?.referral_code) {
+      setReferralLink(`${window.location.origin}/register?ref=${profile.referral_code}`)
+    }
+  }, [profile?.referral_code])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const res = await fetch('/api/referral-stats', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        setStats({ signups: data.signups, conversions: data.conversions })
+      } catch {
+        // Stats are a nice-to-have — never let this break the card.
+      }
+    }
+    fetchStats()
+  }, [])
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(referralLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Clipboard permission denied or unavailable — nothing more to do.
+    }
+  }
+
+  if (!profile?.referral_code) {
+    return (
+      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+        <p className="text-white font-semibold text-sm mb-1">🎁 Refer a friend</p>
+        <p className="text-gray-500 text-xs">Your referral link isn't ready yet — check back shortly.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-teal-950/60 border border-teal-700/30 rounded-2xl p-5">
+        <p className="text-white font-semibold text-sm mb-1">🎁 Refer a friend</p>
+        <p className="text-gray-400 text-xs leading-relaxed mb-4">
+          Share your link. When someone you refer becomes a paying subscriber, you get a free month — no limit on how many times.
+        </p>
+
+        <div className="bg-gray-950/60 border border-gray-800 rounded-xl px-3 py-2.5 mb-3 overflow-x-auto">
+          <p className="text-gray-300 text-xs whitespace-nowrap font-mono">{referralLink}</p>
+        </div>
+
+        <button
+          onClick={handleCopy}
+          className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-2.5 rounded-lg transition text-sm"
+        >
+          {copied ? 'Copied ✓' : 'Copy link'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gray-900 rounded-xl px-3 py-2.5 border border-gray-800">
+          <div className="text-gray-500 text-[11px] mb-1">Signed up</div>
+          <div className="text-white font-semibold text-lg">{stats ? stats.signups : '—'}</div>
+        </div>
+        <div className="bg-gray-900 rounded-xl px-3 py-2.5 border border-gray-800">
+          <div className="text-gray-500 text-[11px] mb-1">Converted</div>
+          <div className="text-white font-semibold text-lg">{stats ? stats.conversions : '—'}</div>
+        </div>
       </div>
     </div>
   )

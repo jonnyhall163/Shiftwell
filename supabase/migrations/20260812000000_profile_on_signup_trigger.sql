@@ -1,3 +1,13 @@
+-- SUPERSEDED by migrations/20260814000000_referral_system.sql, which
+-- replaces handle_new_user() below with a version that also generates a
+-- referral code. Do NOT re-run this file after that one has been applied —
+-- confirmed by testing that doing so silently downgrades the trigger back
+-- to this version, which doesn't set referral_code, and since that column
+-- is NOT NULL, every subsequent signup then fails outright. Keeping this
+-- file only as a record of what shipped first; if you're setting this
+-- project up fresh, you still need to run both, in order, but never run
+-- this one again afterward.
+--
 -- Guarantee every auth.users row gets a matching shiftwell_profiles row,
 -- regardless of whether email confirmation is enabled.
 --
