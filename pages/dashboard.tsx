@@ -277,38 +277,29 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
   const name = user?.user_metadata?.full_name?.split(' ')[0] || 'there'
 
   useEffect(() => {
-    if (profile?.pattern_data) {
-      const shift = getTodayShift(profile.pattern_data as PatternData)
-      setTodayShift(shift)
-      if (shift && !shift.isOff) {
-        setNextMeal(getNextMeal(shift, profile?.dietary_restrictions || []))
-      } else if (shift?.isOff) {
-        setNextMeal('Rest day')
+    // ── Date-dependent pieces, callable both at mount and on refresh ──
+    // TodayView now stays mounted for the life of the dashboard session
+    // (tabs are shown/hidden, not unmounted, so switching away and back
+    // doesn't reset state or refetch). That means anything computed from
+    // "today"/"this hour" here has to be re-derivable later too, or a
+    // session left open across a date or time-block boundary just keeps
+    // showing what was true when it first mounted — the AI briefing in
+    // particular can end up describing yesterday.
+    const refreshShiftAndDate = () => {
+      if (profile?.pattern_data) {
+        const shift = getTodayShift(profile.pattern_data as PatternData)
+        setTodayShift(shift)
+        if (shift && !shift.isOff) {
+          setNextMeal(getNextMeal(shift, profile?.dietary_restrictions || []))
+        } else if (shift?.isOff) {
+          setNextMeal('Rest day')
+        }
       }
     }
-
-    // ── Fetch last 24hrs sleep ────────────────────────
-    const fetchSleep = async () => {
-      const since = new Date()
-      since.setHours(since.getHours() - 24)
-
-      const { data } = await supabase
-        .from('shiftwell_sleep')
-        .select('duration_minutes')
-        .eq('user_id', user.id)
-        .gte('sleep_start', since.toISOString())
-
-      if (data && data.length > 0) {
-        const total = data.reduce((sum, l) => sum + (l.duration_minutes || 0), 0)
-        const h = Math.floor(total / 60)
-        const m = total % 60
-        setSleepStat(m > 0 ? `${h}h ${m}m` : `${h}h`)
-      }
-    }
-    fetchSleep()
 
     const fetchBriefing = async () => {
-     try {
+      setLoadingBriefing(true)
+      try {
         const { data: { session } } = await supabase.auth.getSession()
         const res = await fetch('/api/briefing', {
           method: 'POST',
@@ -332,8 +323,6 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
       }
     }
 
-    fetchBriefing()
-
     const fetchJournalEntry = async () => {
       const today = new Date().toLocaleDateString('en-CA')
       const { data } = await supabase
@@ -344,7 +333,6 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
         .maybeSingle()
       setJournalEntry(data || null)
     }
-    fetchJournalEntry()
 
     const maintainRestDayStreak = async () => {
       if (!profile?.pattern_data) return
@@ -366,8 +354,77 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
 
       setStreak(newStreak)
     }
+
+    // ── Fetch last 24hrs sleep — not date-boundary sensitive in the same
+    // way (always "the last 24 hours from right now"), mount-only is fine.
+    const fetchSleep = async () => {
+      const since = new Date()
+      since.setHours(since.getHours() - 24)
+
+      const { data } = await supabase
+        .from('shiftwell_sleep')
+        .select('duration_minutes')
+        .eq('user_id', user.id)
+        .gte('sleep_start', since.toISOString())
+
+      if (data && data.length > 0) {
+        const total = data.reduce((sum, l) => sum + (l.duration_minutes || 0), 0)
+        const h = Math.floor(total / 60)
+        const m = total % 60
+        setSleepStat(m > 0 ? `${h}h ${m}m` : `${h}h`)
+      }
+    }
+
+    // ── Initial load — same as before ──
+    refreshShiftAndDate()
+    fetchSleep()
+    fetchBriefing()
+    fetchJournalEntry()
     maintainRestDayStreak()
-    
+
+    // ── Keep it fresh for the rest of the session ──
+    // date: for todayShift/nextMeal/journal/streak, which only care about
+    // the calendar day. briefingKey: for the briefing, which also needs to
+    // roll over when the time-block changes within the same day (e.g. a
+    // session left open from morning into afternoon).
+    const clientTimeBlock = (hr: number) =>
+      hr >= 5 && hr < 12 ? 'morning' :
+      hr >= 12 && hr < 18 ? 'afternoon' :
+      hr >= 18 && hr < 23 ? 'evening' : 'night'
+
+    let lastDate = new Date().toLocaleDateString('en-CA')
+    let lastBriefingKey = `${lastDate}-${clientTimeBlock(new Date().getHours())}`
+
+    const refreshIfStale = () => {
+      const currentDate = new Date().toLocaleDateString('en-CA')
+      const currentBriefingKey = `${currentDate}-${clientTimeBlock(new Date().getHours())}`
+
+      if (currentDate !== lastDate) {
+        lastDate = currentDate
+        refreshShiftAndDate()
+        fetchJournalEntry()
+        maintainRestDayStreak()
+      }
+      if (currentBriefingKey !== lastBriefingKey) {
+        lastBriefingKey = currentBriefingKey
+        fetchBriefing()
+      }
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refreshIfStale()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', refreshIfStale)
+    // Fallback for a tab that stays continuously visible/foregrounded
+    // through a boundary without ever losing and regaining visibility.
+    const staleCheckInterval = setInterval(refreshIfStale, 5 * 60 * 1000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', refreshIfStale)
+      clearInterval(staleCheckInterval)
+    }
   }, [])
 
   const rotationSuffix = todayShift?.dayInCycle ? ` · Day ${todayShift.dayInCycle}` : ''
