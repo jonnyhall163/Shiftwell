@@ -933,11 +933,43 @@ function HydrationCard({ user, profile, onUpdate }: { user: User, profile: any, 
   const goal = 8
 
   useEffect(() => {
-    const todayDate = new Date().toLocaleDateString('en-CA')
-    if (profile?.hydration_date === todayDate) {
-      setCount(profile?.hydration_count || 0)
-    } else {
-      setCount(0)
+    // Same staleness problem as the AI briefing: this card stays mounted
+    // for the life of the dashboard session (tabs are shown/hidden, not
+    // unmounted), so a tab left open across midnight needs this to re-run
+    // on the date change, not just once at mount.
+    const checkDailyReset = () => {
+      const todayDate = new Date().toLocaleDateString('en-CA')
+      if (profile?.hydration_date === todayDate) {
+        setCount(profile?.hydration_count || 0)
+      } else {
+        setCount(0)
+      }
+    }
+
+    checkDailyReset()
+
+    let lastDate = new Date().toLocaleDateString('en-CA')
+    const refreshIfStale = () => {
+      const currentDate = new Date().toLocaleDateString('en-CA')
+      if (currentDate !== lastDate) {
+        lastDate = currentDate
+        checkDailyReset()
+      }
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refreshIfStale()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', refreshIfStale)
+    // Fallback for a tab that stays continuously visible/foregrounded
+    // through midnight without ever losing and regaining visibility.
+    const staleCheckInterval = setInterval(refreshIfStale, 5 * 60 * 1000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', refreshIfStale)
+      clearInterval(staleCheckInterval)
     }
   }, [profile])
 
