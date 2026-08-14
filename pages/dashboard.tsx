@@ -138,16 +138,27 @@ export default function Dashboard() {
                   onClick: async () => {
                     setShowProfileMenu(false)
                     const { data: { session } } = await supabase.auth.getSession()
-                    if (!session) return
-                    const res = await fetch('/api/stripe/portal', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
+                    if (!session) {
+                      router.push('/login')
+                      return
+                    }
+                    try {
+                      const res = await fetch('/api/stripe/portal', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${session.access_token}`
+                        }
+                      })
+                      const data = await res.json()
+                      if (data.url) {
+                        window.location.href = data.url
+                      } else {
+                        alert('Something went wrong. Please try again.')
                       }
-                    })
-                    const data = await res.json()
-                    if (data.url) window.location.href = data.url
+                    } catch {
+                      alert('Something went wrong. Please try again.')
+                    }
                   }
                 },
                 {
