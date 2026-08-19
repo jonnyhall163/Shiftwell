@@ -387,7 +387,7 @@ export default function Landing() {
                     </div>
                   ))}
                 </div>
-                <Link href="/register" className="cta-primary" onClick={() => trackCtaClick('pricing_annual')} style={{
+                <Link href="/register?plan=annual" className="cta-primary" onClick={() => trackCtaClick('pricing_annual')} style={{
                   display: 'block', textAlign: 'center', background: '#2dd4bf', color: '#090c14',
                   borderRadius: 12, padding: '15px 24px',
                   fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 15, textDecoration: 'none',
@@ -417,7 +417,7 @@ export default function Landing() {
                     </div>
                   ))}
                 </div>
-                <Link href="/register" className="cta-secondary" onClick={() => trackCtaClick('pricing_monthly')} style={{
+                <Link href="/register?plan=monthly" className="cta-secondary" onClick={() => trackCtaClick('pricing_monthly')} style={{
                   display: 'block', textAlign: 'center', background: 'rgba(255,255,255,0.04)', color: '#f3f4f6',
                   border: '1px solid rgba(255,255,255,0.15)',
                   borderRadius: 12, padding: '15px 24px',

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { captureReferralCodeFromUrl, getStoredReferralCode, clearStoredReferralCode } from '../lib/referral'
+import { capturePlanFromUrl } from '../lib/planPreference'
 import { trackSignUp } from '../lib/analytics'
 
 // Profile row creation now happens server-side, via a DB trigger on
@@ -38,6 +39,10 @@ export default function Register() {
     // In case someone lands directly on /register?ref=CODE without ever
     // visiting the landing page first.
     captureReferralCodeFromUrl()
+    // Which pricing card they clicked (?plan=annual|monthly) — carried via
+    // localStorage so it survives onboarding and the email-confirmation
+    // detour, then honored on /subscribe.
+    capturePlanFromUrl()
   }, [])
 
   const finishSetup = async (userId: string) => {
