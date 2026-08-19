@@ -4,11 +4,38 @@ import Link from 'next/link'
 import ShiftWellDemo from '../components/ShiftWellDemo'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { captureReferralCodeFromUrl } from '../lib/referral'
+import { trackCtaClick } from '../lib/analytics'
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700', '800'],
 })
+
+// ── Testimonials ─────────────────────────────────────────────────────────
+// Paste real ones in here and they'll render automatically in the trust
+// block, beneath the founder quote. Deliberately empty for now: nothing
+// invented goes in this array, since a made-up testimonial on a live page
+// is worse for trust than no testimonial at all.
+//
+// Shape, for reference:
+//   { quote: "Three weeks in and I've stopped dreading night four.",
+//     name: 'Sarah',
+//     role: 'ICU Nurse',
+//     shiftType: 'Rotating nights' }
+type Testimonial = {
+  quote: string
+  name: string
+  role: string
+  shiftType: string
+}
+
+const TESTIMONIALS: Testimonial[] = []
+
+// While TESTIMONIALS is empty, the layout placeholders render in dev only —
+// so the structure is visible while building, but real visitors never see
+// half-finished cards. Statically stripped from the production bundle.
+const SHOW_TESTIMONIAL_PLACEHOLDERS =
+  TESTIMONIALS.length === 0 && process.env.NODE_ENV !== 'production'
 
 export default function Landing() {
   const starsRef = useRef<HTMLDivElement>(null)
@@ -77,6 +104,8 @@ export default function Landing() {
           .feature-card:hover { border-color: rgba(45,212,191,0.25) !important; transform: translateY(-2px); }
           .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(45,212,191,0.3); }
           .cta-primary { transition: transform 0.15s, box-shadow 0.15s; }
+          .cta-secondary { transition: border-color 0.2s, background 0.2s; }
+          .cta-secondary:hover { border-color: rgba(45,212,191,0.5) !important; background: rgba(45,212,191,0.06) !important; }
           .pricing-card { transition: border-color 0.2s, transform 0.2s; }
           .pricing-card:hover { transform: translateY(-2px); }
         `}</style>
@@ -102,7 +131,7 @@ export default function Landing() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <Link href="/login" style={{ color: '#9ca3af', fontSize: 14, textDecoration: 'none', fontWeight: 400 }}>Sign in</Link>
-            <Link href="/register" className="cta-primary" style={{
+            <Link href="/register" className="cta-primary" onClick={() => trackCtaClick('nav')} style={{
               background: '#2dd4bf', color: '#090c14', borderRadius: 10, padding: '9px 18px',
               fontSize: 13, fontWeight: 700, fontFamily: jakarta.style.fontFamily,
               textDecoration: 'none', whiteSpace: 'nowrap'
@@ -110,6 +139,7 @@ export default function Landing() {
           </div>
         </nav>
 
+        {/* ── HERO ────────────────────────────────────────────── */}
         <section style={{ padding: '72px 24px 56px', textAlign: 'center', maxWidth: 680, margin: '0 auto' }} className="fade-up">
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -136,12 +166,12 @@ export default function Landing() {
           </p>
 
           <div className="fade-up-1" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <Link href="/register" className="cta-primary" style={{
+            <Link href="/register" className="cta-primary" onClick={() => trackCtaClick('hero')} style={{
               display: 'inline-block', background: '#2dd4bf', color: '#090c14',
               borderRadius: 12, padding: '16px 40px',
               fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 16, textDecoration: 'none',
             }}>Start your free 14-day trial →</Link>
-            <p style={{ fontSize: 12, color: '#6b7280' }}>Free for 14 days. Cancel before then and pay nothing.</p>
+            <p style={{ fontSize: 12, color: '#6b7280' }}>Card required · £0 today · cancel anytime before your trial ends.</p>
           </div>
 
           <div className="fade-up-2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 32, fontSize: 13, color: '#9ca3af' }}>
@@ -161,6 +191,7 @@ export default function Landing() {
 
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 24px' }}>
 
+          {/* ── PROBLEM ───────────────────────────────────────── */}
           <Divider label="The Problem" jakarta={jakarta.style.fontFamily} />
 
           <div className="fade-up-2" style={{
@@ -177,9 +208,32 @@ export default function Landing() {
             </p>
           </div>
 
-          <Divider label="What You Get" jakarta={jakarta.style.fontFamily} />
+          {/* ── DEMO (moved up: proof before claims) ──────────── */}
+          <Divider label="Try it yourself" jakarta={jakarta.style.fontFamily} />
 
           <div className="fade-up-3" style={{ marginBottom: 64 }}>
+            <p style={{ textAlign: 'center', fontSize: 14, color: '#9ca3af', marginBottom: 24, fontWeight: 300 }}>
+              Pick your shift and explore the app — no sign up needed.
+            </p>
+            <ShiftWellDemo />
+
+            <div style={{ textAlign: 'center', marginTop: 32 }}>
+              <p style={{ fontSize: 15, color: '#d1d5db', marginBottom: 16, fontWeight: 300 }}>
+                Like what you see? The real thing knows <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>your</strong> rotation.
+              </p>
+              <Link href="/register" className="cta-primary" onClick={() => trackCtaClick('post_demo')} style={{
+                display: 'inline-block', background: '#2dd4bf', color: '#090c14',
+                borderRadius: 12, padding: '15px 34px',
+                fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+              }}>Start your free trial →</Link>
+              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>Card required · £0 today · cancel anytime before your trial ends.</p>
+            </div>
+          </div>
+
+          {/* ── FEATURES ──────────────────────────────────────── */}
+          <Divider label="What You Get" jakarta={jakarta.style.fontFamily} />
+
+          <div className="fade-up-4" style={{ marginBottom: 64 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginBottom: 14 }}>
               {[
                 {
@@ -228,31 +282,79 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="fade-up-4" style={{
-            background: 'linear-gradient(135deg, rgba(245,158,11,0.06), rgba(45,212,191,0.06))',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 16, padding: 28, textAlign: 'center', marginBottom: 64
-          }}>
-            <p style={{ fontSize: 15, color: '#d1d5db', fontStyle: 'italic', fontWeight: 300, lineHeight: 1.75 }}>
-              <strong style={{ color: '#f3f4f6', fontWeight: 500, fontStyle: 'normal' }}>"I'm a mechanical engineer on a 4-week rotating shift pattern.</strong> I've spent years trying to use apps that have no idea what my life looks like. So I built ShiftWell — the app I always wished existed."
-            </p>
-            <div style={{ marginTop: 16, fontSize: 13, color: '#9ca3af' }}>— Jonny, Founder & fellow shift worker 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
-          </div>
-
-          <Divider label="Try it yourself" jakarta={jakarta.style.fontFamily} />
+          {/* ── TRUST: founder + testimonials ─────────────────── */}
+          <Divider label="Why ShiftWell Exists" jakarta={jakarta.style.fontFamily} />
 
           <div className="fade-up-5" style={{ marginBottom: 64 }}>
-            <p style={{ textAlign: 'center', fontSize: 14, color: '#9ca3af', marginBottom: 24, fontWeight: 300 }}>
-              Pick your shift and explore the app — no sign up needed.
-            </p>
-            <ShiftWellDemo />
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.06), rgba(45,212,191,0.06))',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 16, padding: 28, textAlign: 'center',
+            }}>
+              <p style={{ fontSize: 15, color: '#d1d5db', fontStyle: 'italic', fontWeight: 300, lineHeight: 1.75 }}>
+                <strong style={{ color: '#f3f4f6', fontWeight: 500, fontStyle: 'normal' }}>"I'm a mechanical engineer on a 4-week rotating shift pattern.</strong> I've spent years trying to use apps that have no idea what my life looks like. So I built ShiftWell — the app I always wished existed."
+              </p>
+              <div style={{ marginTop: 16, fontSize: 13, color: '#9ca3af' }}>— Jonny, Founder &amp; fellow shift worker 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+            </div>
+
+            {TESTIMONIALS.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+                {TESTIMONIALS.map((t, i) => (
+                  <div key={i} style={{
+                    background: '#111827', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 16, padding: 22,
+                  }}>
+                    <p style={{ fontSize: 14, color: '#d1d5db', lineHeight: 1.7, fontWeight: 300, marginBottom: 14 }}>
+                      "{t.quote}"
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#f3f4f6' }}>{t.name}</span>
+                      <span style={{ fontSize: 12, color: '#9ca3af' }}>· {t.role}</span>
+                      <span style={{
+                        fontSize: 10, fontWeight: 600, color: '#2dd4bf',
+                        background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.2)',
+                        borderRadius: 20, padding: '2px 9px',
+                      }}>{t.shiftType}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {SHOW_TESTIMONIAL_PLACEHOLDERS && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+                <p style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: '#f87171', fontWeight: 600, textAlign: 'center' }}>
+                  Dev-only placeholders — fill in TESTIMONIALS in pages/index.tsx
+                </p>
+                {[1, 2, 3].map(n => (
+                  <div key={n} style={{
+                    background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(248,113,113,0.4)',
+                    borderRadius: 16, padding: 22,
+                  }}>
+                    <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7, fontWeight: 300, marginBottom: 14 }}>
+                      "[Testimonial {n} quote — real user's own words]"
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#6b7280' }}>[Name]</span>
+                      <span style={{ fontSize: 12, color: '#4b5563' }}>· [Role]</span>
+                      <span style={{
+                        fontSize: 10, fontWeight: 600, color: '#6b7280',
+                        border: '1px dashed rgba(255,255,255,0.15)',
+                        borderRadius: 20, padding: '2px 9px',
+                      }}>[Shift type]</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
+          {/* ── PRICING ───────────────────────────────────────── */}
           <Divider label="Pricing" jakarta={jakarta.style.fontFamily} />
 
           <div className="fade-up-5" style={{ marginBottom: 64 }}>
             <p style={{ textAlign: 'center', fontSize: 15, color: '#9ca3af', marginBottom: 32, fontWeight: 300 }}>
-              14-day free trial included. Cancel within 14 days and you won't be charged a penny.
+              14-day free trial on either plan. Card required to start · £0 today · cancel anytime before your trial ends and you won't be charged a penny.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -270,7 +372,7 @@ export default function Landing() {
                   <span style={{ fontSize: 14, color: '#6b7280' }}>/year</span>
                 </div>
                 <div style={{ fontSize: 13, color: '#2dd4bf', marginBottom: 24, fontWeight: 500 }}>That's £5/month — you save £36 a year</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                   {[
                     'Shift-aware daily briefing',
                     'Sleep & hydration tracker',
@@ -285,6 +387,11 @@ export default function Landing() {
                     </div>
                   ))}
                 </div>
+                <Link href="/register" className="cta-primary" onClick={() => trackCtaClick('pricing_annual')} style={{
+                  display: 'block', textAlign: 'center', background: '#2dd4bf', color: '#090c14',
+                  borderRadius: 12, padding: '15px 24px',
+                  fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+                }}>Start free trial →</Link>
               </div>
 
               <div className="pricing-card" style={{
@@ -295,7 +402,7 @@ export default function Landing() {
                   <span style={{ fontFamily: jakarta.style.fontFamily, fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£7.99</span>
                   <span style={{ fontSize: 14, color: '#6b7280' }}>/month</span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                   {[
                     'Shift-aware daily briefing',
                     'Sleep & hydration tracker',
@@ -310,12 +417,22 @@ export default function Landing() {
                     </div>
                   ))}
                 </div>
+                <Link href="/register" className="cta-secondary" onClick={() => trackCtaClick('pricing_monthly')} style={{
+                  display: 'block', textAlign: 'center', background: 'rgba(255,255,255,0.04)', color: '#f3f4f6',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 12, padding: '15px 24px',
+                  fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+                }}>Start free trial →</Link>
               </div>
 
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 20, flexWrap: 'wrap' }}>
-              {['✓ 14-day free trial', '✓ Cancel anytime', '✓ No charge if you cancel early'].map((item, i) => (
+            <p style={{ textAlign: 'center', fontSize: 13, color: '#9ca3af', marginTop: 20, lineHeight: 1.7 }}>
+              After 14 days, you'll be charged £7.99/mo (or £59.99/yr) unless you cancel.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 16, flexWrap: 'wrap' }}>
+              {['✓ 14-day free trial', '✓ Cancel anytime', '✓ No charge if you cancel in time'].map((item, i) => (
                 <span key={i} style={{ fontSize: 12, color: '#6b7280' }}>{item}</span>
               ))}
             </div>
@@ -324,6 +441,7 @@ export default function Landing() {
             </p>
           </div>
 
+          {/* ── FINAL CTA ─────────────────────────────────────── */}
           <div className="fade-up-5" style={{ textAlign: 'center', padding: '0 0 80px' }}>
             <h2 style={{
               fontFamily: jakarta.style.fontFamily, fontWeight: 800,
@@ -332,8 +450,8 @@ export default function Landing() {
             }}>
               Ready to finally feel like<br />the app gets you?
             </h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', marginBottom: 32 }}>Free 14-day trial. Cancel within 14 days and pay nothing.</p>
-            <Link href="/register" className="cta-primary" style={{
+            <p style={{ fontSize: 15, color: '#9ca3af', marginBottom: 32 }}>Card required · £0 today · cancel anytime before your trial ends.</p>
+            <Link href="/register" className="cta-primary" onClick={() => trackCtaClick('footer')} style={{
               display: 'inline-block', background: '#2dd4bf', color: '#090c14',
               borderRadius: 12, padding: '16px 40px',
               fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 16, textDecoration: 'none'

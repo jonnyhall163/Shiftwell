@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js'
 import type { PatternData, TodayShift } from '../lib/shiftEngine'
 import { ROUTINES, CATEGORY_META, getRecommendedRoutine } from '../lib/routines'
 import { getFoodPlan, getNextMeal } from '../lib/foodEngine'
+import { trackTrialStarted } from '../lib/analytics'
 
 const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
@@ -29,6 +30,19 @@ export default function Dashboard() {
   useEffect(() => {
     setVisitedTabs(prev => (prev.has(activeTab) ? prev : new Set(prev).add(activeTab)))
   }, [activeTab])
+
+  // Stripe sends the user back here as /dashboard?subscribed=true once
+  // checkout completes — the trial-started conversion point. Read from
+  // location.search rather than router.query so it's available immediately
+  // on mount without waiting for router.isReady, and ref-guarded so a
+  // StrictMode double-invoke can't double-count it.
+  const trialEventFired = useRef(false)
+  useEffect(() => {
+    if (trialEventFired.current || typeof window === 'undefined') return
+    if (new URLSearchParams(window.location.search).get('subscribed') !== 'true') return
+    trialEventFired.current = true
+    trackTrialStarted()
+  }, [])
 
   useEffect(() => {
     const init = async () => {

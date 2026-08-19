@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import { trackBeginCheckout } from '../lib/analytics'
 
 export default function Subscribe() {
   const [loading, setLoading] = useState<string | null>(null)
@@ -25,6 +26,9 @@ export default function Subscribe() {
 
     const data = await res.json()
     if (data.url) {
+      // Session exists and we're about to hand off to Stripe. gtag uses
+      // sendBeacon, so this survives the navigation below.
+      trackBeginCheckout(plan)
       window.location.href = data.url
     } else {
       alert('Something went wrong. Please try again.')

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { captureReferralCodeFromUrl, getStoredReferralCode, clearStoredReferralCode } from '../lib/referral'
+import { trackSignUp } from '../lib/analytics'
 
 // Profile row creation now happens server-side, via a DB trigger on
 // auth.users insert (see supabase/migrations/20260812000000_profile_on_signup_trigger.sql) —
@@ -88,6 +89,12 @@ export default function Register() {
     // metadata for the DB trigger to validate and record. Nothing more to
     // do with it client-side either way.
     clearStoredReferralCode()
+
+    // Fired here rather than in either branch below, so it counts the auth
+    // account being created regardless of whether email confirmation is on
+    // (i.e. whether they go straight to onboarding or to the check-your-
+    // email screen).
+    trackSignUp()
 
     if (!data.session) {
       // Email confirmation is enabled — there's no session yet, so any
