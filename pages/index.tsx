@@ -5,6 +5,7 @@ import ShiftWellDemo from '../components/ShiftWellDemo'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { captureReferralCodeFromUrl } from '../lib/referral'
 import { trackCtaClick } from '../lib/analytics'
+import { DEFAULT_TITLE, DEFAULT_DESCRIPTION, absoluteUrl } from '../lib/seo'
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -72,6 +73,16 @@ export default function Landing() {
         <title>ShiftWell — Built for Shift Workers</title>
         <meta name="description" content="ShiftWell is a wellness app built for shift workers. Sleep guidance, food timing and AI coaching that actually fits your rotation — not a 9-to-5." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        {/* Share card. Image, type and site_name are inherited from
+            _app.tsx; these are the page-specific bits. Matching keys mean
+            these replace the defaults rather than duplicating them. */}
+        <link rel="canonical" href={absoluteUrl('/')} />
+        <meta property="og:url" content={absoluteUrl('/')} key="og:url" />
+        <meta property="og:title" content={DEFAULT_TITLE} key="og:title" />
+        <meta property="og:description" content={DEFAULT_DESCRIPTION} key="og:description" />
+        <meta name="twitter:title" content={DEFAULT_TITLE} key="twitter:title" />
+        <meta name="twitter:description" content={DEFAULT_DESCRIPTION} key="twitter:description" />
         <style>{`
           @keyframes twinkle {
             0%, 100% { opacity: var(--min-op, 0.1); }
