@@ -41,6 +41,7 @@ Get a new user from signup to "I'd miss this" in their first week. ShiftWell has
   - Save Stripe's real trial end date.
   - Re-check the subscription with Stripe on every event.
   - Correct the 29 stale "trialing" rows.
+- [x] Fix the Supabase server key: the web app's `SUPABASE_SERVICE_ROLE_KEY` was from another project, so every server-key write (Stripe webhook, referral stats) got "Invalid API key" and was silently dropped. *(24 Sept 2026, Vercel env change, no commit: proven by a resent Stripe event at 21:20 UTC. The webhook saw Ashleigh's row, logged the comp_access skip, and Supabase answered 200/204.)*
 - [x] Fix the US/Canada time bugs: *(24 Sept 2026, f9f69da)*
   - Send the user's local date and hour to `/api/briefing` and `/api/companion`, and never work them out on the server.
   - Fix the `toISOString()` date in `lib/shiftEngine.ts` for variable schedules.
