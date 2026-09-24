@@ -36,22 +36,22 @@ Get a new user from signup to "I'd miss this" in their first week. ShiftWell has
 ## Priority 1: Fix this week (live web app, `jonnyhall163/Shiftwell`)
 
 - [ ] Turn on Stripe's trial reminder emails (Stripe dashboard setting, no code).
-- [ ] Fix the Stripe webhook:
+- [ ] Fix the Stripe webhook: *(code written and tested with mocks on branch `claude/shiftwell-app-audit-4m6qm8`, 11309dc. Not on main until tested in Stripe test mode. Row fix SQL written, waiting for Jonny's OK.)*
   - The £0 invoice at trial start marks users "active" and pays the referral reward early. Stop it.
   - Save Stripe's real trial end date.
   - Re-check the subscription with Stripe on every event.
   - Correct the 29 stale "trialing" rows.
-- [ ] Fix the US/Canada time bugs:
+- [x] Fix the US/Canada time bugs: *(24 Sept 2026, f9f69da)*
   - Send the user's local date and hour to `/api/briefing` and `/api/companion`, and never work them out on the server.
   - Fix the `toISOString()` date in `lib/shiftEngine.ts` for variable schedules.
-- [ ] Make the companion safe at 3am:
+- [x] Make the companion safe at 3am: *(24 Sept 2026, f9f69da)*
   - Add crisis guidance (Samaritans 116 123 in the UK, 988 in the US and Canada).
   - Cap message length and history, and rate-limit it.
-- [ ] Remove "they chose this life" from both AI prompts.
-- [ ] Replace the invented social proof (the made-up avatar letters) with a real testimonial, or remove it.
-- [ ] Track activation events: onboarding step completed, onboarding finished, first briefing seen, first sleep/water/journal log, companion used. Fix the broken GA `dataLayer` fallback.
-- [ ] Run a secret scan on the full history of the public web repo, or make the repo private.
-- [ ] Supabase critical advisory: RLS is disabled on `spatial_ref_sys`, a PostGIS system table in the shared Elsie project. Don't enable it blind. Check which apps use PostGIS first. The proper fix comes with the Supabase move.
+- [x] Remove "they chose this life" from both AI prompts. *(24 Sept 2026, f9f69da)*
+- [x] Replace the invented social proof (the made-up avatar letters) with a real testimonial, or remove it. *(24 Sept 2026, f9f69da: removed; empty testimonial slot ready)*
+- [x] Track activation events: onboarding step completed, onboarding finished, first briefing seen, first sleep/water/journal log, companion used. Fix the broken GA `dataLayer` fallback. *(24 Sept 2026, f9f69da)*
+- [x] Run a secret scan on the full history of the public web repo, or make the repo private. *(24 Sept 2026, all 72 commits scanned, nothing found, no code change)*
+- [ ] Supabase critical advisory: RLS is disabled on `spatial_ref_sys`, a PostGIS system table in the shared Elsie project. Don't enable it blind. Check which apps use PostGIS first. The proper fix comes with the Supabase move. *(Checked 24 Sept 2026: the web app uses no PostGIS. In the database, only `get_snipswap_nearby_listings` (another app) uses it.)*
 
 ## Priority 2: Build into the native launch (`jonnyhall163/shiftwell-native`)
 
