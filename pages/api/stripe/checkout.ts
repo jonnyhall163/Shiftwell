@@ -4,10 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-const supabase = createClient(
+// Server key: billing columns (stripe_customer_id etc.) are being locked
+// so users can't edit them with their own login. Only ever used after the
+// caller's identity has been checked below.
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { global: { headers: { Authorization: '' } } }
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -45,10 +47,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
     customerId = customer.id
 
-    await supabaseAuth
+    // Only fill it if still empty, so a double-clicked checkout can't
+    // replace the customer another request already saved.
+    const { data: saved, error: saveError } = await supabaseAdmin
       .from('shiftwell_profiles')
       .update({ stripe_customer_id: customerId })
       .eq('id', user.id)
+      .is('stripe_customer_id', null)
+      .select('stripe_customer_id')
+      .maybeSingle()
+
+    if (saveError) {
+      // Without the saved customer id the webhook can't find this user, so
+      // don't take them to a checkout we can't record.
+      console.error('Checkout: failed to save stripe_customer_id:', saveError)
+      return res.status(500).json({ error: 'Could not start checkout, please try again.' })
+    }
+
+    if (!saved) {
+      // Another request saved a customer first: use that one.
+      const { data: current } = await supabaseAdmin
+        .from('shiftwell_profiles')
+        .select('stripe_customer_id')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (!current?.stripe_customer_id) {
+        console.error(`Checkout: profile ${user.id} not found when saving stripe_customer_id`)
+        return res.status(500).json({ error: 'Could not start checkout, please try again.' })
+      }
+      customerId = current.stripe_customer_id
+    }
   }
 
   const session = await stripe.checkout.sessions.create({
