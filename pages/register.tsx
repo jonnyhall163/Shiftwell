@@ -46,12 +46,9 @@ export default function Register() {
   }, [])
 
   const finishSetup = async (userId: string) => {
-    // Belt-and-braces: the trigger should already have created the row, but
-    // we do have a session at this point, so a client-side upsert is also
-    // safe under RLS (auth.uid() = id) if for any reason the trigger hasn't
-    // run yet — cheap self-heal before we give up and show an error.
-    await supabase.from('shiftwell_profiles').upsert({ id: userId, email, full_name: name || undefined })
-
+    // The profile row is created by the database signup trigger. (There used
+    // to be a client-side upsert here as a fallback, but it could never
+    // succeed: it doesn't supply the NOT NULL referral_code.)
     const ready = await waitForProfile(userId)
     if (ready) {
       router.push('/onboarding')

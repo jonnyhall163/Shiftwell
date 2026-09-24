@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getTodayShift, getUpcomingShifts } from '../../lib/shiftEngine'
 import type { PatternData } from '../../lib/shiftEngine'
 import { hasPaidAccess } from '../../lib/access'
+import { readBriefingCache, encodeBriefingCache } from '../../lib/briefingCache'
 import { readClientTime, formatClockTime, formatLongDate, weekdayName } from '../../lib/clientTime'
 
 const anthropic = new Anthropic({
@@ -50,10 +51,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const hour = clientTime.localHour
   const todayDate = clientTime.localDate
   const timeBlock = getTimeBlock(hour)
-  const cacheKey = `${todayDate}-${timeBlock}`
 
-  if (profile.briefing_cache && profile.briefing_date === cacheKey) {
-    return res.status(200).json({ briefing: profile.briefing_cache, cached: true })
+  const cached = readBriefingCache(profile.briefing_cache, profile.briefing_date, todayDate, timeBlock)
+  if (cached) {
+    return res.status(200).json({ briefing: cached, cached: true })
   }
 
   // ── Generate fresh briefing ──────────────────────────
@@ -115,13 +116,16 @@ Rules:
 
     const briefing = message.content[0].type === 'text' ? message.content[0].text : ''
 
-    await supabase
-      .from('shiftwell_profiles')
-      .update({
-        briefing_cache: briefing,
-        briefing_date: cacheKey,
-      })
-      .eq('id', user.id)
+    if (briefing) {
+      const { error: cacheError } = await supabase
+        .from('shiftwell_profiles')
+        .update({
+          briefing_cache: encodeBriefingCache(timeBlock, briefing),
+          briefing_date: todayDate,
+        })
+        .eq('id', user.id)
+      if (cacheError) console.error('Briefing cache write failed (non-fatal):', cacheError)
+    }
 
     return res.status(200).json({ briefing })
   } catch (err) {
