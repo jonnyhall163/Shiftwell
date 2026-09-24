@@ -49,6 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       stripe,
       supabase,
       yearlyPriceId: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID,
+      shiftwellPriceIds: [
+        process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID,
+        process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID,
+      ].filter((id): id is string => !!id),
       log: console,
     })
   } catch (err: any) {

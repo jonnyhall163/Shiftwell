@@ -20,6 +20,10 @@ export type WebhookDeps = {
   stripe: Pick<Stripe, 'subscriptions' | 'customers'>
   supabase: SupabaseClient
   yearlyPriceId?: string
+  // ShiftWell's own Stripe prices. The Stripe account is shared with other
+  // products, whose subscription events reach this webhook too; anything
+  // not on one of these prices is ignored. Empty = no filtering.
+  shiftwellPriceIds?: string[]
   log?: Pick<Console, 'log' | 'error' | 'warn'>
 }
 
@@ -82,7 +86,7 @@ async function findProfile(deps: WebhookDeps, customerId: string): Promise<Profi
   if (error) throw new RetryableWebhookError(`Profile lookup failed: ${error.message}`)
   if (data) return data as ProfileRow
 
-  // No row carries this customer id — e.g. checkout.ts's write of
+  // No row carries this customer id. For example, checkout.ts's write of
   // stripe_customer_id didn't stick. The customer was created with the
   // Supabase user id in its metadata, so link it up via that, but only
   // onto a row that has no customer yet.
@@ -116,10 +120,31 @@ async function findProfile(deps: WebhookDeps, customerId: string): Promise<Profi
     .eq('id', userId)
     .maybeSingle()
   if (!exists) {
-    throw new RetryableWebhookError(`Profile ${userId} (customer ${customerId}) is not visible: check SUPABASE_SERVICE_ROLE_KEY is the service-role key`)
+    // Either the user deleted their account (nothing to update, don't make
+    // Stripe retry for days) or this key can't see any rows at all.
+    if (!(await canSeeProfiles(deps))) {
+      throw new RetryableWebhookError(`Profile ${userId} (customer ${customerId}) is not visible: check SUPABASE_SERVICE_ROLE_KEY is the service-role key`)
+    }
+    deps.log?.warn(`Profile ${userId} for customer ${customerId} no longer exists (deleted account?); ignoring`)
+    return null
   }
   deps.log?.warn(`Profile ${userId} already has customer ${exists.stripe_customer_id}; not linking ${customerId}`)
   return null
+}
+
+// True if this key can see profile rows at all. With a non-service key,
+// row-level security hides every row without an error, which is how the
+// old webhook failed silently from March to September 2026.
+async function canSeeProfiles(deps: WebhookDeps): Promise<boolean> {
+  const { data, error } = await deps.supabase.from('shiftwell_profiles').select('id').limit(1)
+  if (error) throw new RetryableWebhookError(`Profile visibility check failed: ${error.message}`)
+  return !!data?.length
+}
+
+function isShiftWellSubscription(sub: Stripe.Subscription, priceIds: string[] | undefined): boolean {
+  const ids = (priceIds || []).filter(Boolean)
+  if (!ids.length) return true
+  return (sub.items?.data || []).some(item => !!item.price?.id && ids.includes(item.price.id))
 }
 
 // Re-fetches the subscription and writes Stripe's current view of it.
@@ -135,6 +160,11 @@ async function syncSubscription(deps: WebhookDeps, subscriptionId: string) {
 
   const customerId = customerIdOf(sub as any)
   if (!customerId) return
+
+  if (!isShiftWellSubscription(sub, deps.shiftwellPriceIds)) {
+    log?.log(`Ignoring subscription ${sub.id}: not on a ShiftWell price (another product on this Stripe account)`)
+    return
+  }
 
   const profile = await findProfile(deps, customerId)
   if (!profile) {
