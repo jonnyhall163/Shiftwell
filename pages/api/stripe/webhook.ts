@@ -253,6 +253,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     case 'invoice.payment_succeeded': {
       const invoice = event.data.object as Stripe.Invoice
+      // A £0 invoice (the one Stripe sends when a trial starts) is not a
+      // payment: don't mark the user active or pay a referral reward.
+      if (!invoice.amount_paid) {
+        console.log(`Ignoring £0 invoice ${invoice.id}`)
+        break
+      }
       const customerId = getCustomerId(invoice)
       if (customerId) {
         // Same ordering requirement as above — read old status first.
