@@ -76,7 +76,9 @@ export default function Dashboard() {
         : null
 
       const trialExpired = trialEnd && trialEnd < new Date()
-      const isCanceled = status === 'canceled' || status === 'past_due'
+      // Stripe statuses that mean "no access". null (webhook not arrived
+      // yet) is handled by the trial / no-customer checks below instead.
+      const isCanceled = ['canceled', 'past_due', 'unpaid', 'incomplete_expired', 'paused'].includes(status)
 
       // Catch users who never completed Stripe checkout
       const createdAt = profile?.created_at ? new Date(profile.created_at) : null
