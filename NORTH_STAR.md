@@ -35,8 +35,8 @@ Get a new user from signup to "I'd miss this" in their first week. ShiftWell has
 
 ## Priority 1: Fix this week (live web app, `jonnyhall163/Shiftwell`)
 
-- [ ] Turn on Stripe's trial reminder emails (Stripe dashboard setting, no code).
-- [ ] Fix the Stripe webhook: *(code written and tested with mocks on branch `claude/shiftwell-app-audit-4m6qm8`, 11309dc. Not on main until tested in Stripe test mode. Row fix SQL written, waiting for Jonny's OK.)*
+- [x] Turn on Stripe's trial reminder emails (Stripe dashboard setting, no code). *(24 Sept 2026: Jonny checked, already on)*
+- [ ] Fix the Stripe webhook: *(code written and tested with mocks on branch `claude/shiftwell-app-audit-4m6qm8`, 11309dc. Not on main until tested in a Stripe sandbox. The 29 stale rows were corrected against Stripe on 24 Sept 2026, a direct database fix with no commit.)*
   - The £0 invoice at trial start marks users "active" and pays the referral reward early. Stop it.
   - Save Stripe's real trial end date.
   - Re-check the subscription with Stripe on every event.
@@ -51,6 +51,7 @@ Get a new user from signup to "I'd miss this" in their first week. ShiftWell has
 - [x] Replace the invented social proof (the made-up avatar letters) with a real testimonial, or remove it. *(24 Sept 2026, f9f69da: removed; empty testimonial slot ready)*
 - [x] Track activation events: onboarding step completed, onboarding finished, first briefing seen, first sleep/water/journal log, companion used. Fix the broken GA `dataLayer` fallback. *(24 Sept 2026, f9f69da)*
 - [x] Run a secret scan on the full history of the public web repo, or make the repo private. *(24 Sept 2026, all 72 commits scanned, nothing found, no code change)*
+- [ ] Ambassador/comp access: a `comp_access` flag on `shiftwell_profiles` (only the service role can set it) gives full access whatever Stripe says, and the Stripe webhook skips those users. Set for Jonny and Ashleigh. *(Code 8b77a56 and column added 24 Sept 2026. Tick once Ashleigh's Stripe cancellation is confirmed safe.)*
 - [ ] Supabase critical advisory: RLS is disabled on `spatial_ref_sys`, a PostGIS system table in the shared Elsie project. Don't enable it blind. Check which apps use PostGIS first. The proper fix comes with the Supabase move. *(Checked 24 Sept 2026: the web app uses no PostGIS. In the database, only `get_snipswap_nearby_listings` (another app) uses it.)*
 
 ## Priority 2: Build into the native launch (`jonnyhall163/shiftwell-native`)
@@ -67,6 +68,7 @@ Get a new user from signup to "I'd miss this" in their first week. ShiftWell has
    - A reminder 2 days before the trial ends.
 4. **Make logging pay off.** A weekly recap card, e.g. "3 nights, 4h 40m average sleep, best sleep came after your last coffee before 3am".
 5. **Trial and pricing.** Use Apple's standard free trial, with the annual plan as the default. Don't cut the price: this is a value problem, not a price problem.
+   - [ ] Honour `shiftwell_profiles.comp_access`: when it's true, give full access with no paywall, whatever the subscription status or App Store entitlement says (ambassadors such as Ashleigh, and Jonny). Only the service role can set it.
 6. **Hide Community at launch.** Bring it back once there are a couple of hundred active users.
 7. **Food logging.** Caffeine logging only at launch. Full meal/snack logging comes later.
 8. **Move ShiftWell off Elsie's Supabase before launch.** The shared project's signup trigger may create ShiftWell profiles for other apps' signups.
