@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { getTodayShift, getUpcomingShifts } from '../../lib/shiftEngine'
 import type { PatternData } from '../../lib/shiftEngine'
+import { hasPaidAccess } from '../../lib/access'
 import { readClientTime, formatClockTime, formatLongDate, weekdayName } from '../../lib/clientTime'
 
 const anthropic = new Anthropic({
@@ -39,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (error || !profile) return res.status(404).json({ error: 'Profile not found' })
 
-  if (profile.subscription_status !== 'active' && profile.subscription_status !== 'trialing') {
+  if (!hasPaidAccess(profile)) {
     return res.status(403).json({ error: 'Subscription required' })
   }
 

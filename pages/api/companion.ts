@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getTodayShift } from '../../lib/shiftEngine'
 import type { PatternData } from '../../lib/shiftEngine'
 import { readClientTime, formatClockTime } from '../../lib/clientTime'
+import { hasPaidAccess } from '../../lib/access'
 import { MAX_MESSAGE_CHARS, isRateLimited, sanitizeHistory } from '../../lib/companionLimits'
 
 const anthropic = new Anthropic({
@@ -54,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.subscription_status !== 'active' && profile.subscription_status !== 'trialing')) {
+  if (!hasPaidAccess(profile)) {
     return res.status(403).json({ error: 'Subscription required' })
   }
 

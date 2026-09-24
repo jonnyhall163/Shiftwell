@@ -197,11 +197,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const getCustomerId = (obj: any): string | null => obj?.customer || null
 
+  // Comp accounts (ambassadors) have access regardless of Stripe, so Stripe
+  // events must never touch their billing fields: cancelling a refunded
+  // subscription in Stripe would otherwise mark them "canceled".
   const updateByCustomer = async (customerId: string, updates: Record<string, any>) => {
+    const { data: comp } = await supabase
+      .from('shiftwell_profiles')
+      .select('id')
+      .eq('stripe_customer_id', customerId)
+      .eq('comp_access', true)
+    if (comp?.length) {
+      console.log(`Skipping ${event.type} for comp_access profile(s) ${comp.map(r => r.id).join(', ')} (customer ${customerId})`)
+    }
+
     const { error } = await supabase
       .from('shiftwell_profiles')
       .update(updates)
       .eq('stripe_customer_id', customerId)
+      .eq('comp_access', false) // enforced in the write itself, not just the check above
 
     if (error) console.error('Supabase update error:', error)
   }

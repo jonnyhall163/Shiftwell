@@ -8,6 +8,7 @@ import { ROUTINES, CATEGORY_META, getRecommendedRoutine } from '../lib/routines'
 import { getFoodPlan, getNextMeal } from '../lib/foodEngine'
 import { trackTrialStarted, trackFirstBriefingSeen, trackFirstLog, trackCompanionMessageSent } from '../lib/analytics'
 import { clientTimePayload } from '../lib/clientTime'
+import { hasCompAccess } from '../lib/access'
 
 const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
@@ -63,6 +64,12 @@ export default function Dashboard() {
       }
 
       // ── Paywall check ────────────────────────────────
+      // Comp accounts (ambassadors) skip it entirely, whatever Stripe says.
+      if (hasCompAccess(profile)) {
+        setProfile(profile)
+        return
+      }
+
       const status = profile?.subscription_status
       const trialEnd = profile?.trial_ends_at
         ? new Date(profile.trial_ends_at)
@@ -146,7 +153,8 @@ export default function Dashboard() {
                 {
                   label: 'Subscription',
                   icon: '💳',
-                  sub: profile?.subscription_status === 'active' ? 'Active' :
+                  sub: hasCompAccess(profile) ? 'Free access' :
+                       profile?.subscription_status === 'active' ? 'Active' :
                        profile?.subscription_status === 'trialing' ? '14-day trial' :
                        profile?.subscription_status === 'past_due' ? 'Payment failed' :
                        profile?.subscription_status === 'canceled' ? 'Canceled' : 'Manage',
