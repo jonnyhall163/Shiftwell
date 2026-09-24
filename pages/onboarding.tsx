@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import type { ShiftDefinition, FixedPatternData, NightsPatternData, VariablePatternData } from '../lib/shiftEngine'
+import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics'
 
 type Step = 'type' | 'configure' | 'rotation' | 'variable' | 'life'
 
@@ -137,6 +138,13 @@ export default function Onboarding() {
   const filledDays = variableDates.filter(d => variableSchedule[d]).length
   const totalDays = variableDates.length
 
+  // Forward moves only — the Back button still calls setStep directly, so
+  // going back and forth doesn't count as completing a step.
+  const advanceTo = (next: Step) => {
+    trackOnboardingStepCompleted(step)
+    setStep(next)
+  }
+
   const handleSave = async () => {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -178,6 +186,8 @@ export default function Onboarding() {
       .eq('id', user.id)
 
     if (!error) {
+      trackOnboardingStepCompleted('life')
+      trackOnboardingCompleted(patternType)
       const { data: updatedProfile } = await supabase
         .from('shiftwell_profiles')
         .select('stripe_customer_id')
@@ -255,9 +265,9 @@ export default function Onboarding() {
                 key={option.id}
                 onClick={() => {
                   setPatternType(option.patternType)
-                  if (option.id === 'variable') setStep('variable')
-                  else if (option.id === 'nights') setStep('configure')
-                  else { setShifts(PRESET_SHIFTS); setStep('configure') }
+                  if (option.id === 'variable') advanceTo('variable')
+                  else if (option.id === 'nights') advanceTo('configure')
+                  else { setShifts(PRESET_SHIFTS); advanceTo('configure') }
                 }}
                 className="w-full bg-gray-900 border border-gray-800 hover:border-teal-500 rounded-2xl p-5 text-left transition-all"
               >
@@ -446,7 +456,7 @@ export default function Onboarding() {
             </div>
 
             <button
-              onClick={() => setStep('life')}
+              onClick={() => advanceTo('life')}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
               Next — A bit about your life →
@@ -550,7 +560,7 @@ export default function Onboarding() {
             </div>
 
             <button
-              onClick={() => setStep('rotation')}
+              onClick={() => advanceTo('rotation')}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
               Next — Map your rotation →
@@ -586,7 +596,7 @@ export default function Onboarding() {
               </div>
             </div>
             <button
-              onClick={() => setStep('life')}
+              onClick={() => advanceTo('life')}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
               Next →
@@ -631,7 +641,7 @@ export default function Onboarding() {
               })}
             </div>
             <button
-              onClick={() => setStep('life')}
+              onClick={() => advanceTo('life')}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
               Next — A bit about your life →

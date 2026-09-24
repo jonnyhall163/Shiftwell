@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { getTodayShift, getUpcomingShifts } from '../../lib/shiftEngine'
 import type { PatternData } from '../../lib/shiftEngine'
+import { readClientTime, formatClockTime, formatLongDate, weekdayName } from '../../lib/clientTime'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -43,9 +44,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // ── Time block cache key ─────────────────────────────
-  const now = req.body.localTime ? new Date(req.body.localTime) : new Date()
-  const hour = typeof req.body.localHour === 'number' ? req.body.localHour : now.getHours()
-  const todayDate = (req.body.localDate as string) || new Date().toISOString().split('T')[0]
+  // All of this comes from the user's own clock — the server is on UTC.
+  const clientTime = readClientTime(req.body)
+  const hour = clientTime.localHour
+  const todayDate = clientTime.localDate
   const timeBlock = getTimeBlock(hour)
   const cacheKey = `${todayDate}-${timeBlock}`
 
@@ -57,8 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const patternData = profile.pattern_data as PatternData
   if (!patternData) return res.status(400).json({ error: 'No shift pattern set' })
 
-  const todayShift = getTodayShift(patternData)
-  const upcoming = getUpcomingShifts(patternData, 7)
+  const todayShift = getTodayShift(patternData, todayDate)
+  const upcoming = getUpcomingShifts(patternData, 7, todayDate)
   const name = profile.full_name?.split(' ')[0] || 'there'
 
   const timeOfDay =
@@ -66,15 +68,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     hour >= 12 && hour < 18 ? 'afternoon' :
     hour >= 18 && hour < 23 ? 'evening' : 'middle of the night'
 
-  const currentDate = now.toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-  })
+  const currentDate = formatLongDate(todayDate)
 
   const upcomingText = upcoming
     .map((s, i) => {
-      const date = new Date(now)
-      date.setDate(date.getDate() + i)
-      const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : date.toLocaleDateString('en-GB', { weekday: 'long' })
+      const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : weekdayName(todayDate, i)
       return `${dayName}: ${s.label}${s.isOff ? ' (rest day)' : ` (${s.startTime}–${s.endTime})`}`
     })
     .join('\n')
@@ -85,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 User: ${name}
 Current date: ${currentDate}
-Current time: ${timeOfDay} (${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })})
+Current time: ${timeOfDay} (${formatClockTime(clientTime)})
 Today's shift: ${todayShift.label}${todayShift.isOff ? ' (rest day)' : ` — ${todayShift.startTime} to ${todayShift.endTime}`}
 ${todayShift.dayInCycle ? `Day ${todayShift.dayInCycle} of their rotation` : ''}
 ${lifeContext ? `\nLife context:\n${lifeContext}` : ''}
@@ -100,7 +98,7 @@ Write a personalised daily briefing for ${name}. Keep it to 3 short paragraphs. 
 
 Rules:
 - Never use breakfast, lunch or dinner — use "meal 1", "meal 2" etc
-- Never frame shift work negatively — they chose this life, help them thrive in it
+- Many shift workers didn't choose this pattern. Never assume they did. Be practical and warm, never preachy.
 - Be warm but concise — no bullet points, just flowing prose
 - STRICT maximum 100 words total. Count every word before responding. If you exceed 100 words, rewrite shorter. No exceptions.
 - Only reference the actual current season and weather conditions for the real current date — do not assume or invent seasonal details

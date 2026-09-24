@@ -38,6 +38,36 @@ const TESTIMONIALS: Testimonial[] = []
 const SHOW_TESTIMONIAL_PLACEHOLDERS =
   TESTIMONIALS.length === 0 && process.env.NODE_ENV !== 'production'
 
+// ── Hero social proof ────────────────────────────────────────────────────
+// ONE real testimonial, shown under the hero CTA. Replaces the made-up
+// avatar letters ("N J S R — Join shift workers already using ShiftWell"),
+// which implied users who don't exist.
+//
+// PLACEHOLDER: renders nothing while null. To fill it, use a real user's
+// own words and their permission, e.g.
+//   const HERO_TESTIMONIAL: HeroTestimonialData = {
+//     quote: "First app that's ever understood night four.",
+//     firstName: 'Sarah',
+//     role: 'ICU Nurse',
+//   }
+type HeroTestimonialData = { quote: string; firstName: string; role: string }
+
+const HERO_TESTIMONIAL: HeroTestimonialData | null = null
+
+function HeroTestimonial({ testimonial }: { testimonial: HeroTestimonialData | null }) {
+  if (!testimonial) return null
+  return (
+    <figure className="fade-up-2" style={{ marginTop: 32, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
+      <blockquote style={{ fontSize: 14, color: '#d1d5db', fontStyle: 'italic', fontWeight: 300, lineHeight: 1.7 }}>
+        "{testimonial.quote}"
+      </blockquote>
+      <figcaption style={{ marginTop: 8, fontSize: 12, color: '#9ca3af' }}>
+        — {testimonial.firstName}, {testimonial.role}
+      </figcaption>
+    </figure>
+  )
+}
+
 export default function Landing() {
   const starsRef = useRef<HTMLDivElement>(null)
 
@@ -185,19 +215,7 @@ export default function Landing() {
             <p style={{ fontSize: 12, color: '#6b7280' }}>Card required · £0 today · cancel anytime before your trial ends.</p>
           </div>
 
-          <div className="fade-up-2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 32, fontSize: 13, color: '#9ca3af' }}>
-            <div style={{ display: 'flex' }}>
-              {([['#7c3aed','N'],['#0891b2','J'],['#b45309','S'],['#065f46','R']] as [string,string][]).map(([bg, letter], i) => (
-                <div key={i} style={{
-                  width: 28, height: 28, borderRadius: '50%', background: bg,
-                  border: '2px solid #090c14', marginLeft: i === 0 ? 0 : -8,
-                  fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 600, color: 'white'
-                }}>{letter}</div>
-              ))}
-            </div>
-            <span>Join shift workers already using ShiftWell</span>
-          </div>
+          <HeroTestimonial testimonial={HERO_TESTIMONIAL} />
         </section>
 
         <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 24px' }}>

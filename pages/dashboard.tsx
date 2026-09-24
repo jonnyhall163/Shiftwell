@@ -6,7 +6,8 @@ import type { User } from '@supabase/supabase-js'
 import type { PatternData, TodayShift } from '../lib/shiftEngine'
 import { ROUTINES, CATEGORY_META, getRecommendedRoutine } from '../lib/routines'
 import { getFoodPlan, getNextMeal } from '../lib/foodEngine'
-import { trackTrialStarted } from '../lib/analytics'
+import { trackTrialStarted, trackFirstBriefingSeen, trackFirstLog, trackCompanionMessageSent } from '../lib/analytics'
+import { clientTimePayload } from '../lib/clientTime'
 
 const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
@@ -334,13 +335,14 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
           },
           body: JSON.stringify({
             userId: user.id,
-            localTime: new Date().toISOString(),
-            localDate: new Date().toLocaleDateString('en-CA'), // gives YYYY-MM-DD in local time
-            localHour: new Date().getHours(), // user's local hour, not the server's
+            // The server is on UTC — send the user's own date, hour,
+            // minute and offset so the shift and time of day are theirs.
+            ...clientTimePayload(),
           }),
         })
         const data = await res.json()
         setBriefing(data.briefing || '')
+        if (data.briefing) trackFirstBriefingSeen(user.id)
       } catch {
         setBriefing('Unable to load briefing right now. Check back shortly.')
       } finally {
@@ -684,6 +686,7 @@ function SleepView({ user }: { user: User }) {
         sleep_type: sleepType,
       })
     if (!error) {
+      trackFirstLog(user.id, 'sleep')
       setShowForm(false)
       setSleepStart('')
       setSleepEnd('')
@@ -1003,13 +1006,15 @@ function HydrationCard({ user, profile, onUpdate }: { user: User, profile: any, 
     setSaving(true)
     const todayDate = new Date().toLocaleDateString('en-CA')
 
-    await supabase
+    const { error } = await supabase
       .from('shiftwell_profiles')
       .update({
         hydration_count: newCount,
         hydration_date: todayDate,
       })
       .eq('id', user.id)
+
+    if (!error && newCount > count) trackFirstLog(user.id, 'water')
 
     setCount(newCount)
     onUpdate(newCount)
@@ -1511,7 +1516,9 @@ function ReferralCard({ profile }: { profile: any }) {
 
 // ── COMPANION ─────────────────────────────────────────────
 function CompanionView({ user, profile }: { user: User, profile: any }) {
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([])
+  // `local` marks client-side notices (errors, rate limits) that are shown
+  // in the thread but never sent back to the API as conversation history.
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string, local?: boolean }[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [opening, setOpening] = useState(true)
@@ -1550,7 +1557,7 @@ function CompanionView({ user, profile }: { user: User, profile: any }) {
   const sendMessage = async () => {
     if (!input.trim() || loading) return
 
-    const userMessage = { role: 'user' as const, content: input.trim() }
+    const userMessage: { role: 'user', content: string, local?: boolean } = { role: 'user', content: input.trim() }
     const updatedMessages = [...messages, userMessage]
     setMessages(updatedMessages)
     setInput('')
@@ -1565,21 +1572,28 @@ function CompanionView({ user, profile }: { user: User, profile: any }) {
           'Authorization': `Bearer ${session?.access_token}`
         },
         body: JSON.stringify({
-          messages: updatedMessages.map(m => ({
+          messages: updatedMessages.filter(m => !m.local).map(m => ({
             role: m.role,
             content: m.content
-          }))
+          })),
+          ...clientTimePayload(),
         }),
       })
 
       const data = await res.json()
+      if (res.ok) trackCompanionMessageSent()
       if (data.reply) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+      } else if (data.error) {
+        // Rate limit, over-long message, etc. — show the server's friendly
+        // text instead of leaving the user with no reply at all.
+        setMessages(prev => [...prev, { role: 'assistant', content: data.error, local: true }])
       }
     } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, I lost connection for a moment. Try again?'
+        content: 'Sorry, I lost connection for a moment. Try again?',
+        local: true,
       }])
     } finally {
       setLoading(false)
@@ -1641,6 +1655,7 @@ function CompanionView({ user, profile }: { user: User, profile: any }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') sendMessage() }}
+          maxLength={2000}
           placeholder="Type something..."
           className="flex-1 bg-gray-900 border border-gray-800 text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-600"
         />
@@ -1710,6 +1725,7 @@ function ShiftJournalCard({ user, profile, todayShift, existingEntry, onSaved }:
       )
 
     if (!error) {
+      trackFirstLog(user.id, 'journal')
       // Update streak
       const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA')
       const lastDate = profile?.streak_last_date

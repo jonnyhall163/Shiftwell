@@ -61,13 +61,36 @@ function daysBetween(from: Date, to: Date): number {
   return Math.round((utcTo - utcFrom) / (1000 * 60 * 60 * 24))
 }
 
-export function getTodayShift(patternData: PatternData): TodayShift {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayStr = today.toISOString().split('T')[0]
+// "YYYY-MM-DD" from a Date's LOCAL calendar fields. toISOString() converts
+// to UTC first, so local midnight becomes the previous day anywhere ahead
+// of UTC (UK summer time, Europe, Australia) — which is how variable
+// schedules were looking up yesterday's shift.
+export function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
+const DATE_STR_RE = /^\d{4}-\d{2}-\d{2}$/
+
+// Resolves the "today" to calculate from. The server runs on UTC, so API
+// routes should pass the client's own local date; anything missing or
+// malformed falls back to this machine's local date.
+function resolveDate(onDate?: string | null): Date {
+  if (onDate && DATE_STR_RE.test(onDate)) {
+    const d = parseLocalDate(onDate)
+    if (!isNaN(d.getTime())) return d
+  }
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function shiftForDate(patternData: PatternData, date: Date): TodayShift {
   if (patternData.type === 'variable') {
-    const entry = patternData.schedule.find(s => s.date === todayStr)
+    const dateStr = toLocalDateStr(date)
+    const entry = patternData.schedule.find(s => s.date === dateStr)
     if (entry) {
       return {
         label: entry.label,
@@ -77,13 +100,7 @@ export function getTodayShift(patternData: PatternData): TodayShift {
         dayInCycle: null,
       }
     }
-    return {
-      label: 'No shift set',
-      startTime: '',
-      endTime: '',
-      isOff: false,
-      dayInCycle: null,
-    }
+    return { label: 'No shift set', startTime: '', endTime: '', isOff: false, dayInCycle: null }
   }
 
   if (patternData.type === 'nights') {
@@ -98,7 +115,7 @@ export function getTodayShift(patternData: PatternData): TodayShift {
 
   if (patternData.type === 'fixed') {
     const start = parseLocalDate(patternData.startDate)
-    const diffDays = daysBetween(start, today)
+    const diffDays = daysBetween(start, date)
     const dayInCycle = ((diffDays % patternData.cycleLength) + patternData.cycleLength) % patternData.cycleLength
 
     const shiftIndex = patternData.rotation[dayInCycle]
@@ -113,75 +130,25 @@ export function getTodayShift(patternData: PatternData): TodayShift {
     }
   }
 
-  return {
-    label: 'Unknown',
-    startTime: '',
-    endTime: '',
-    isOff: false,
-    dayInCycle: null,
-  }
+  return { label: 'Unknown', startTime: '', endTime: '', isOff: false, dayInCycle: null }
 }
 
-export function getUpcomingShifts(patternData: PatternData, days: number = 7): TodayShift[] {
+/**
+ * Today's shift. Pass `onDate` ("YYYY-MM-DD", the user's local date) from
+ * server code — without it, "today" is the server's date, which is UTC.
+ */
+export function getTodayShift(patternData: PatternData, onDate?: string | null): TodayShift {
+  return shiftForDate(patternData, resolveDate(onDate))
+}
+
+/** The next `days` shifts starting from `fromDate` (user's local date) or today. */
+export function getUpcomingShifts(patternData: PatternData, days: number = 7, fromDate?: string | null): TodayShift[] {
+  const base = resolveDate(fromDate)
   const upcoming: TodayShift[] = []
-
   for (let i = 0; i < days; i++) {
-    const date = new Date()
-    date.setHours(0, 0, 0, 0)
-    date.setDate(date.getDate() + i)
-    const dateStr = date.toISOString().split('T')[0]
-
-    if (patternData.type === 'variable') {
-      const entry = patternData.schedule.find(s => s.date === dateStr)
-      if (entry) {
-        upcoming.push({
-          label: entry.label,
-          startTime: entry.startTime,
-          endTime: entry.endTime,
-          isOff: entry.isOff,
-          dayInCycle: null,
-        })
-      } else {
-        upcoming.push({
-          label: 'No shift set',
-          startTime: '',
-          endTime: '',
-          isOff: false,
-          dayInCycle: null,
-        })
-      }
-      continue
-    }
-
-    if (patternData.type === 'nights') {
-      upcoming.push({
-        label: 'Night Shift',
-        startTime: patternData.shift.startTime,
-        endTime: patternData.shift.endTime,
-        isOff: false,
-        dayInCycle: null,
-      })
-      continue
-    }
-
-    if (patternData.type === 'fixed') {
-      const start = parseLocalDate(patternData.startDate)
-      const diffDays = daysBetween(start, date)
-      const dayInCycle = ((diffDays % patternData.cycleLength) + patternData.cycleLength) % patternData.cycleLength
-
-      const shiftIndex = patternData.rotation[dayInCycle]
-      const shift = patternData.shifts[shiftIndex]
-
-      upcoming.push({
-        label: shift.label,
-        startTime: shift.startTime,
-        endTime: shift.endTime,
-        isOff: shift.isOff,
-        dayInCycle: dayInCycle + 1,
-      })
-    }
+    const date = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i)
+    upcoming.push(shiftForDate(patternData, date))
   }
-
   return upcoming
 }
 

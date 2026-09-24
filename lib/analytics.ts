@@ -6,9 +6,11 @@
 // the signup/checkout flow it's measuring, so every call is guarded and
 // swallowed.
 //
-// If gtag.js hasn't finished loading yet, events are pushed onto dataLayer
-// instead and processed once it does, so a fast click right after hydration
-// still gets counted.
+// If the inline gtag snippet in _app.tsx hasn't run yet, we install the
+// exact same stub it defines — `function gtag(){dataLayer.push(arguments)}`
+// — and call that. gtag.js only processes queued commands in its own
+// Arguments format; the old fallback pushed plain arrays, which it
+// silently ignores, so any event fired before the snippet ran was lost.
 
 export type CtaLocation =
   | 'nav'
@@ -22,15 +24,34 @@ function track(event: string, params?: Record<string, any>) {
   try {
     if (typeof window === 'undefined') return
     const w = window as any
-    if (typeof w.gtag === 'function') {
-      w.gtag('event', event, params || {})
-    } else {
+    if (typeof w.gtag !== 'function') {
       w.dataLayer = w.dataLayer || []
-      w.dataLayer.push(['event', event, params || {}])
+      // Must be a real `function` (not an arrow) so `arguments` exists.
+      w.gtag = function gtag() {
+        // eslint-disable-next-line prefer-rest-params
+        w.dataLayer.push(arguments)
+      }
     }
+    w.gtag('event', event, params || {})
   } catch {
     // Never let a missing/blocked analytics script break the page.
   }
+}
+
+// Fires `event` at most once per user on this device. Per-device is the
+// best available without a database column (the DB is shared with the iOS
+// app), and GA4 won't de-duplicate them for us — so read these as "first
+// time on this device". A user on two devices can fire each twice.
+function trackOncePerUser(key: string, userId: string | null | undefined, event: string, params?: Record<string, any>) {
+  try {
+    if (typeof window === 'undefined' || !userId) return
+    const storageKey = `sw_ga_${key}_${userId}`
+    if (localStorage.getItem(storageKey)) return
+    localStorage.setItem(storageKey, '1')
+  } catch {
+    // Storage blocked: fall through and fire anyway rather than lose it.
+  }
+  track(event, params)
 }
 
 /** Any "start free trial" click, tagged with where on the page it came from. */
@@ -51,4 +72,35 @@ export function trackBeginCheckout(plan: string) {
 /** Stripe sent the user back to /dashboard?subscribed=true — trial is live. */
 export function trackTrialStarted() {
   track('trial_started')
+}
+
+// ── Activation ───────────────────────────────────────────
+
+export type OnboardingStep = 'type' | 'configure' | 'rotation' | 'variable' | 'life'
+
+/** A step of the onboarding wizard was completed (user moved past it). */
+export function trackOnboardingStepCompleted(step: OnboardingStep) {
+  track('onboarding_step_completed', { step })
+}
+
+/** Onboarding saved successfully. */
+export function trackOnboardingCompleted(patternType: string | null) {
+  track('onboarding_completed', { pattern_type: patternType || 'unknown' })
+}
+
+/** The first AI briefing actually rendered for this user. */
+export function trackFirstBriefingSeen(userId: string) {
+  trackOncePerUser('first_briefing_seen', userId, 'first_briefing_seen')
+}
+
+export type LogType = 'sleep' | 'water' | 'journal'
+
+/** First successful log of each type for this user. */
+export function trackFirstLog(userId: string, type: LogType) {
+  trackOncePerUser(`first_log_${type}`, userId, 'first_log', { type })
+}
+
+/** A companion message was accepted by the server. */
+export function trackCompanionMessageSent() {
+  track('companion_message_sent')
 }
