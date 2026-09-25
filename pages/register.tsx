@@ -56,7 +56,7 @@ export default function Register() {
     }
 
     setPendingUserId(userId)
-    setError("We couldn't finish setting up your account. Your login works, but setup didn't complete — please retry.")
+    setError("We couldn't finish setting up your account. Your login works, but setup didn't complete. Please retry.")
     setLoading(false)
   }
 

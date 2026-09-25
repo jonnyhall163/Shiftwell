@@ -105,7 +105,7 @@ function shiftForDate(patternData: PatternData, date: Date): TodayShift {
 
   if (patternData.type === 'nights') {
     return {
-      label: 'Night Shift',
+      label: 'Night',
       startTime: patternData.shift.startTime,
       endTime: patternData.shift.endTime,
       isOff: false,

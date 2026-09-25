@@ -32,7 +32,7 @@ export default function Contact() {
       <a href="/" style={{ color: '#2dd4bf', textDecoration: 'none', fontSize: 14 }}>← Back to ShiftWell</a>
 
       <h1 style={{ color: '#2dd4bf', marginTop: 24, marginBottom: 8 }}>Contact Us</h1>
-      <p style={{ color: '#94a3b8', marginBottom: 48 }}>We're a small team — we read every message and reply as fast as we can.</p>
+      <p style={{ color: '#94a3b8', marginBottom: 48 }}>We're a small team. We read every message and reply as fast as we can.</p>
 
       <div style={{ background: '#1e293b', borderRadius: 12, padding: 32, marginBottom: 24 }}>
         <h2 style={{ color: '#f59e0b', marginTop: 0 }}>General enquiries</h2>

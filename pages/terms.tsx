@@ -23,8 +23,8 @@ export default function Terms() {
       <h2 style={{ color: '#f59e0b' }}>Subscription and billing</h2>
       <ul>
         <li>ShiftWell is available on a monthly (£7.99/month) or annual (£59.99/year) subscription</li>
-        <li>A 14-day free trial is included — you will not be charged until the trial ends</li>
-        <li>You can cancel at any time via the Customer Portal — cancellation takes effect at the end of your billing period</li>
+        <li>A 14-day free trial is included. You will not be charged until the trial ends</li>
+        <li>You can cancel at any time via the Customer Portal. Cancellation takes effect at the end of your billing period</li>
         <li>Payments are processed securely by Stripe</li>
         <li>We do not offer refunds for partial billing periods</li>
       </ul>

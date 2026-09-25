@@ -388,8 +388,8 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
   const [loadingBriefing, setLoadingBriefing] = useState(true)
   const [todayShift, setTodayShift] = useState<TodayShift | null>(null)
   const [hydrationCount, setHydrationCount] = useState(0)
-  const [sleepStat, setSleepStat] = useState('—')
-  const [nextMeal, setNextMeal] = useState('—')
+  const [sleepStat, setSleepStat] = useState('Not logged')
+  const [nextMeal, setNextMeal] = useState('…')
   const [journalEntry, setJournalEntry] = useState<any>(null)
   const [journalRefresh, setJournalRefresh] = useState(0)
   const [streak, setStreak] = useState(profile?.streak_count || 0)
@@ -583,7 +583,7 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
           <p className="text-gray-500 text-sm mt-1">
             {todayShift
               ? todayShift.isOff
-                ? `Rest day — make it count${rotationSuffix}`
+                ? `Rest day. Make it count${rotationSuffix}`
                 : `${todayShift.label} shift · ${formatShiftTime(todayShift.startTime, todayShift.endTime)}${rotationSuffix}`
               : "Here's your shift wellness briefing"
             }
@@ -887,9 +887,9 @@ function SleepView({ user }: { user: User }) {
       <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
         <p className="text-gray-500 text-xs mb-1">Total sleep logged today</p>
         <p className="text-white text-3xl font-bold">
-          {totalToday > 0 ? formatDuration(totalToday) : '—'}
+          {totalToday > 0 ? formatDuration(totalToday) : 'None yet'}
         </p>
-        <p className="text-gray-600 text-xs mt-1">Log any sleep window — naps count too</p>
+        <p className="text-gray-600 text-xs mt-1">Log any sleep window. Naps count too</p>
       </div>
 
       {/* 7-day sleep graph */}
@@ -1039,7 +1039,7 @@ function SleepView({ user }: { user: User }) {
       ) : logs.length === 0 ? (
         <div className="bg-gray-900 rounded-2xl p-8 text-center border border-gray-800">
           <div className="text-4xl mb-3">🌙</div>
-          <p className="text-gray-400 text-sm">No sleep logged yet. Log any window — even a nap counts.</p>
+          <p className="text-gray-400 text-sm">No sleep logged yet. Log any window. Even a nap counts.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -1238,7 +1238,7 @@ function FoodView({ profile }: { profile: any }) {
       {/* Note */}
       <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
         <p className="text-gray-600 text-xs leading-relaxed text-center">
-          Meal times are calculated from your shift pattern. Never breakfast, lunch or dinner — just Meal 1, 2, 3 whenever your body needs them.
+          Meal times are calculated from your shift pattern. Never breakfast, lunch or dinner. Just Meal 1, 2, 3 whenever your body needs them.
         </p>
       </div>
     </div>
@@ -1367,9 +1367,9 @@ function RoutinesView({ user, profile }: { user: User, profile: any }) {
         <div className="max-w-lg mx-auto text-center space-y-6 pt-8">
           <div className="text-6xl">🎉</div>
           <h2 className="text-2xl font-bold text-white">Routine complete!</h2>
-          <p className="text-gray-400">{activeRoutine.name} — {activeRoutine.duration} mins done.</p>
+          <p className="text-gray-400">{activeRoutine.name}: {activeRoutine.duration} mins done.</p>
           <div className="bg-teal-950/60 border border-teal-700/30 rounded-2xl p-5">
-            <p className="text-teal-300 text-sm">Logged to your history. That counts — no matter how small it felt.</p>
+            <p className="text-teal-300 text-sm">Logged to your history. That counts, no matter how small it felt.</p>
           </div>
           <button
             onClick={exitRoutine}
@@ -1595,7 +1595,7 @@ function ReferralCard({ profile }: { profile: any }) {
     return (
       <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
         <p className="text-white font-semibold text-sm mb-1">🎁 Refer a friend</p>
-        <p className="text-gray-500 text-xs">Your referral link isn't ready yet — check back shortly.</p>
+        <p className="text-gray-500 text-xs">Your referral link isn't ready yet. Check back shortly.</p>
       </div>
     )
   }
@@ -1605,7 +1605,7 @@ function ReferralCard({ profile }: { profile: any }) {
       <div className="bg-teal-950/60 border border-teal-700/30 rounded-2xl p-5">
         <p className="text-white font-semibold text-sm mb-1">🎁 Refer a friend</p>
         <p className="text-gray-400 text-xs leading-relaxed mb-4">
-          Share your link. When someone you refer becomes a paying subscriber, you get a free month — no limit on how many times.
+          Share your link. When someone you refer becomes a paying subscriber, you get a free month. No limit on how many times.
         </p>
 
         <div className="bg-gray-950/60 border border-gray-800 rounded-xl px-3 py-2.5 mb-3 overflow-x-auto">
@@ -1623,11 +1623,11 @@ function ReferralCard({ profile }: { profile: any }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gray-900 rounded-xl px-3 py-2.5 border border-gray-800">
           <div className="text-gray-500 text-[11px] mb-1">Signed up</div>
-          <div className="text-white font-semibold text-lg">{stats ? stats.signups : '—'}</div>
+          <div className="text-white font-semibold text-lg">{stats ? stats.signups : '…'}</div>
         </div>
         <div className="bg-gray-900 rounded-xl px-3 py-2.5 border border-gray-800">
           <div className="text-gray-500 text-[11px] mb-1">Converted</div>
-          <div className="text-white font-semibold text-lg">{stats ? stats.conversions : '—'}</div>
+          <div className="text-white font-semibold text-lg">{stats ? stats.conversions : '…'}</div>
         </div>
       </div>
     </div>
@@ -1653,15 +1653,15 @@ function CompanionView({ user, profile }: { user: User, profile: any }) {
       : null
 
     if (hour >= 0 && hour < 5) {
-      return `Hey ${name} — still going at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}. ${shift && !shift.isOff ? `Night ${shift.dayInCycle} of your rotation.` : ''} How are you holding up?`
+      return `Hey ${name}, still going at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}. ${shift && !shift.isOff ? `Night ${shift.dayInCycle} of your rotation.` : ''} How are you holding up?`
     }
     if (hour >= 5 && hour < 12) {
-      return `Morning ${name}. ${shift?.isOff ? 'Rest day today — how are you feeling?' : `${shift?.label} shift today. How did the night treat you?`}`
+      return `Morning ${name}. ${shift?.isOff ? 'Rest day today. How are you feeling?' : `${shift?.label} shift today. How did the night treat you?`}`
     }
     if (hour >= 12 && hour < 18) {
-      return `Hey ${name}. ${shift?.isOff ? 'Hope you\'re making the most of your day off.' : `${shift?.label} shift ahead — how are you feeling going into it?`}`
+      return `Hey ${name}. ${shift?.isOff ? 'Hope you\'re making the most of your day off.' : `${shift?.label} shift ahead. How are you feeling going into it?`}`
     }
-    return `Evening ${name}. ${shift?.isOff ? 'Rest day winding down — how was it?' : `How\'s the ${shift?.label} shift going?`}`
+    return `Evening ${name}. ${shift?.isOff ? 'Rest day winding down. How was it?' : `How\'s the ${shift?.label} shift going?`}`
   }
 
   useEffect(() => {
@@ -2079,7 +2079,7 @@ function QuickRoutinesStrip({ profile, onSeeAll }: { profile: any, onSeeAll?: ()
         <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 text-center space-y-4">
           <div className="text-5xl">🎉</div>
           <p className="text-white font-bold text-lg">Routine complete!</p>
-          <p className="text-gray-400 text-sm">{activeRoutine.name} — {activeRoutine.duration} mins done.</p>
+          <p className="text-gray-400 text-sm">{activeRoutine.name}: {activeRoutine.duration} mins done.</p>
           <button onClick={exitRoutine} className="w-full bg-teal-500 text-gray-950 font-semibold py-3 rounded-xl text-sm">
             Back to Today
           </button>
@@ -2322,7 +2322,7 @@ function CommunityView({ user, profile }: { user: User, profile: any }) {
             type="text"
             value={role}
             onChange={e => setRole(e.target.value)}
-            placeholder="Your role (e.g. ICU Nurse, Paramedic) — optional"
+            placeholder="Your role (e.g. ICU Nurse, Paramedic), optional"
             className="w-full bg-gray-800 text-white rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-600"
           />
           <textarea
@@ -2554,7 +2554,7 @@ function SettingsView({ user, profile, onSignOut }: { user: User, profile: any, 
         Sign out
       </button>
 
-      <p className="text-center text-gray-700 text-xs pb-4">ShiftWell v0.2 — Sprint 2</p>
+      <p className="text-center text-gray-700 text-xs pb-4">ShiftWell v0.2 · Sprint 2</p>
     </div>
   )
 }

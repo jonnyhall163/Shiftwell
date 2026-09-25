@@ -62,7 +62,7 @@ function HeroTestimonial({ testimonial }: { testimonial: HeroTestimonialData | n
         "{testimonial.quote}"
       </blockquote>
       <figcaption style={{ marginTop: 8, fontSize: 12, color: '#9ca3af' }}>
-        — {testimonial.firstName}, {testimonial.role}
+        {testimonial.firstName}, {testimonial.role}
       </figcaption>
     </figure>
   )
@@ -100,8 +100,8 @@ export default function Landing() {
   return (
     <>
       <Head>
-        <title>ShiftWell — Built for Shift Workers</title>
-        <meta name="description" content="ShiftWell is a wellness app built for shift workers. Sleep guidance, food timing and AI coaching that actually fits your rotation — not a 9-to-5." />
+        <title>ShiftWell: Built for Shift Workers</title>
+        <meta name="description" content="ShiftWell is a wellness app built for shift workers. Sleep guidance, food timing and AI coaching that actually fits your rotation, not a 9-to-5." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         {/* Share card. Image, type and site_name are inherited from
@@ -203,7 +203,7 @@ export default function Landing() {
           </h1>
 
           <p style={{ fontSize: 17, fontWeight: 300, color: '#d1d5db', maxWidth: 500, margin: '0 auto 40px', lineHeight: 1.7 }}>
-            ShiftWell wraps <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>sleep guidance, food timing, and daily AI coaching</strong> around your actual shift pattern — not some imaginary routine.
+            ShiftWell wraps <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>sleep guidance, food timing, and daily AI coaching</strong> around your actual shift pattern, not some imaginary routine.
           </p>
 
           <div className="fade-up-1" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -231,7 +231,7 @@ export default function Landing() {
               Sound familiar?
             </div>
             <p style={{ fontSize: 16, color: '#d1d5db', lineHeight: 1.8, fontWeight: 300 }}>
-              Every health app tells you to <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>sleep by 10pm, eat breakfast at 8am, and go for a morning jog.</strong> But you finished a night shift at 7am. Your watch is buzzing because it thinks you <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>"should"</strong> be asleep right now. Nobody — not MyFitnessPal, not Headspace, not your fitness tracker — has any idea what your body is actually going through.
+              Every health app tells you to <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>sleep by 10pm, eat breakfast at 8am, and go for a morning jog.</strong> But you finished a night shift at 7am. Your watch is buzzing because it thinks you <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>"should"</strong> be asleep right now. Nobody (not MyFitnessPal, not Headspace, not your fitness tracker) has any idea what your body is actually going through.
               <br /><br />
               <strong style={{ color: '#f3f4f6', fontWeight: 500 }}>ShiftWell does.</strong>
             </p>
@@ -242,7 +242,7 @@ export default function Landing() {
 
           <div className="fade-up-3" style={{ marginBottom: 64 }}>
             <p style={{ textAlign: 'center', fontSize: 14, color: '#9ca3af', marginBottom: 24, fontWeight: 300 }}>
-              Pick your shift and explore the app — no sign up needed.
+              Pick your shift and explore the app. No sign up needed.
             </p>
             <ShiftWellDemo />
 
@@ -268,17 +268,17 @@ export default function Landing() {
                 {
                   icon: '🌙',
                   title: 'Shift-Aware Sleep',
-                  desc: 'Sleep windows based on your actual rotation — not generic bedtime advice that assumes you sleep at night.'
+                  desc: 'Sleep windows based on your actual rotation, not generic bedtime advice that assumes you sleep at night.'
                 },
                 {
                   icon: '🍽️',
                   title: 'Food That Fits Your Shifts',
-                  desc: 'Meal timing built around your rotation — no breakfast, lunch or dinner labels. Dietary preferences baked in so suggestions actually work for you.'
+                  desc: 'Meal timing built around your rotation, with no breakfast, lunch or dinner labels. Dietary preferences baked in so suggestions actually work for you.'
                 },
                 {
                   icon: '✦',
                   title: 'Daily AI Briefing',
-                  desc: 'A personalised briefing every day that knows exactly where you are in your cycle — and what your body needs right now.'
+                  desc: 'A personalised briefing every day that knows exactly where you are in your cycle, and what your body needs right now.'
                 },
                 {
                   icon: '💬',
@@ -321,9 +321,9 @@ export default function Landing() {
               borderRadius: 16, padding: 28, textAlign: 'center',
             }}>
               <p style={{ fontSize: 15, color: '#d1d5db', fontStyle: 'italic', fontWeight: 300, lineHeight: 1.75 }}>
-                <strong style={{ color: '#f3f4f6', fontWeight: 500, fontStyle: 'normal' }}>"I'm a mechanical engineer on a 4-week rotating shift pattern.</strong> I've spent years trying to use apps that have no idea what my life looks like. So I built ShiftWell — the app I always wished existed."
+                <strong style={{ color: '#f3f4f6', fontWeight: 500, fontStyle: 'normal' }}>"I'm a mechanical engineer on a 4-week rotating shift pattern.</strong> I've spent years trying to use apps that have no idea what my life looks like. So I built ShiftWell, the app I always wished existed."
               </p>
-              <div style={{ marginTop: 16, fontSize: 13, color: '#9ca3af' }}>— Jonny, Founder &amp; fellow shift worker 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+              <div style={{ marginTop: 16, fontSize: 13, color: '#9ca3af' }}>Jonny, Founder &amp; fellow shift worker 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
             </div>
 
             {TESTIMONIALS.length > 0 && (
@@ -353,7 +353,7 @@ export default function Landing() {
             {SHOW_TESTIMONIAL_PLACEHOLDERS && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
                 <p style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: '#f87171', fontWeight: 600, textAlign: 'center' }}>
-                  Dev-only placeholders — fill in TESTIMONIALS in pages/index.tsx
+                  Dev-only placeholders: fill in TESTIMONIALS in pages/index.tsx
                 </p>
                 {[1, 2, 3].map(n => (
                   <div key={n} style={{
@@ -361,7 +361,7 @@ export default function Landing() {
                     borderRadius: 16, padding: 22,
                   }}>
                     <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7, fontWeight: 300, marginBottom: 14 }}>
-                      "[Testimonial {n} quote — real user's own words]"
+                      "[Testimonial {n} quote: real user's own words]"
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 13, fontWeight: 600, color: '#6b7280' }}>[Name]</span>
@@ -400,7 +400,7 @@ export default function Landing() {
                   <span style={{ fontFamily: jakarta.style.fontFamily, fontWeight: 800, fontSize: 40, color: '#f3f4f6' }}>£59.99</span>
                   <span style={{ fontSize: 14, color: '#6b7280' }}>/year</span>
                 </div>
-                <div style={{ fontSize: 13, color: '#2dd4bf', marginBottom: 24, fontWeight: 500 }}>That's £5/month — you save £36 a year</div>
+                <div style={{ fontSize: 13, color: '#2dd4bf', marginBottom: 24, fontWeight: 500 }}>That's £5/month, so you save £36 a year</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                   {[
                     'Shift-aware daily briefing',
@@ -409,7 +409,7 @@ export default function Landing() {
                     '3am companion chat',
                     'Routines & exercises',
                     'Shift journal & pattern tracking',
-                    'Community feed — shift workers only',
+                    'Community feed, shift workers only',
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
                       <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
@@ -439,7 +439,7 @@ export default function Landing() {
                     '3am companion chat',
                     'Routines & exercises',
                     'Shift journal & pattern tracking',
-                    'Community feed — shift workers only',
+                    'Community feed, shift workers only',
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#d1d5db' }}>
                       <span style={{ color: '#2dd4bf', fontSize: 18, lineHeight: 1 }}>✓</span>{item}
@@ -503,7 +503,7 @@ export default function Landing() {
             <a href="/contact" style={{ color: '#64748b', fontSize: 14, textDecoration: 'none' }}>Contact</a>
           </div>
           <p style={{ fontSize: 12, color: '#9ca3af' }}>
-            © 2026 ShiftWell. Made in Glasgow 🏴󠁧󠁢󠁳󠁣󠁴󠁿 — for every nurse, engineer, officer and worker keeping the world running overnight.
+            © 2026 ShiftWell. Made in Glasgow 🏴󠁧󠁢󠁳󠁣󠁴󠁿 for every nurse, engineer, officer and worker keeping the world running overnight.
           </p>
           <p style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>Growvia Digital Ltd</p>
         </footer>

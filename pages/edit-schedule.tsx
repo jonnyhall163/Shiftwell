@@ -566,7 +566,7 @@ export default function EditSchedule() {
         {/* Dietary restrictions */}
         <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
           <label className="block text-sm text-gray-400 mb-1">Dietary requirements</label>
-          <p className="text-gray-600 text-xs mb-3">Select all that apply — affects food suggestions and AI briefing</p>
+          <p className="text-gray-600 text-xs mb-3">Select all that apply. This affects food suggestions and your AI briefing</p>
           <div className="flex flex-wrap gap-2">
             {DIETARY_OPTIONS.map(diet => (
               <button

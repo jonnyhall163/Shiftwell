@@ -15,22 +15,22 @@ const SHIFT_OPTIONS = [
 
 const BRIEFINGS: Record<string, { icon: string; title: string; text: string }[]> = {
   night3: [
-    { icon: '🌙', title: 'Sleep window', text: 'You finish at 07:00 — aim to be in bed by 08:30. Blackout blinds on, phone on silent. Transition to days in 48 hours — this window matters.' },
+    { icon: '🌙', title: 'Sleep window', text: 'You finish at 07:00. Aim to be in bed by 08:30. Blackout blinds on, phone on silent. Transition to days in 48 hours, so this window matters.' },
     { icon: '💧', title: 'Hydration', text: '6 hours into nights. Avoid caffeine for the next 3 hours. Drink 500ml of water before you leave the building.' },
-    { icon: '⚡', title: 'Focus', text: 'Night 3 is when fatigue peaks. One thing only — sleep well today. Everything else can wait.' },
-    { icon: '🍽️', title: 'Meal timing', text: 'Meal 2 before your shift ends. Keep it light — eggs, oats, something easy to digest. Avoid heavy protein until you wake.' },
+    { icon: '⚡', title: 'Focus', text: 'Night 3 is when fatigue peaks. One thing only: sleep well today. Everything else can wait.' },
+    { icon: '🍽️', title: 'Meal timing', text: 'Meal 2 before your shift ends. Keep it light: eggs, oats, something easy to digest. Avoid heavy protein until you wake.' },
   ],
   early1: [
-    { icon: '🌅', title: 'Sleep window', text: 'Early start tomorrow at 06:00. Wind down by 21:30 tonight. Your body needs at least 7 hours — protect this window.' },
-    { icon: '💧', title: 'Hydration', text: 'First day of Earlies — start hydrating now. 2 litres before your shift ends.' },
-    { icon: '⚡', title: 'Focus', text: 'Day 1 of Earlies is the adjustment day. Energy will dip around 14:00 — plan for it.' },
+    { icon: '🌅', title: 'Sleep window', text: 'Early start tomorrow at 06:00. Wind down by 21:30 tonight. Your body needs at least 7 hours. Protect this window.' },
+    { icon: '💧', title: 'Hydration', text: 'First day of Earlies. Start hydrating now. 2 litres before your shift ends.' },
+    { icon: '⚡', title: 'Focus', text: 'Day 1 of Earlies is the adjustment day. Energy will dip around 14:00, so plan for it.' },
     { icon: '🍽️', title: 'Meal timing', text: 'Meal 1 before you leave. Something with slow-release carbs. Don\'t leave the house on empty.' },
   ],
   dayoff: [
-    { icon: '🌙', title: 'Sleep', text: 'No alarm today. Let your body lead. If you\'ve come off nights, sleeping until midday is normal — not lazy.' },
+    { icon: '🌙', title: 'Sleep', text: 'No alarm today. Let your body lead. If you\'ve come off nights, sleeping until midday is normal, not lazy.' },
     { icon: '💧', title: 'Hydration', text: 'Days off are for recovery. Ditch the caffeine today if you can. Water and real food.' },
     { icon: '⚡', title: 'Focus', text: 'One day off is not enough to fully recover from a night block. Be kind to yourself today.' },
-    { icon: '🍽️', title: 'Meal timing', text: 'Eat when you\'re hungry today — no schedule. Your rhythm is resetting.' },
+    { icon: '🍽️', title: 'Meal timing', text: 'Eat when you\'re hungry today. No schedule. Your rhythm is resetting.' },
   ],
 }
 
@@ -44,25 +44,25 @@ const SLEEP_LOGS = [
 
 const MEALS: Record<string, { label: string; time: string; suggestion: string; status: string }[]> = {
   night3: [
-    { label: 'Meal 1', time: '21:30', suggestion: 'Light carbs before shift — oats, toast, banana', status: 'done' },
-    { label: 'Meal 2', time: '02:00', suggestion: 'Mid-shift fuel — rice, chicken, easy to digest', status: 'upcoming' },
-    { label: 'Meal 3', time: '06:30', suggestion: 'Post-shift recovery — eggs, avocado, protein shake', status: 'later' },
+    { label: 'Meal 1', time: '21:30', suggestion: 'Light carbs before shift: oats, toast, banana', status: 'done' },
+    { label: 'Meal 2', time: '02:00', suggestion: 'Mid-shift fuel: rice, chicken, easy to digest', status: 'upcoming' },
+    { label: 'Meal 3', time: '06:30', suggestion: 'Post-shift recovery: eggs, avocado, protein shake', status: 'later' },
   ],
   early1: [
-    { label: 'Meal 1', time: '05:30', suggestion: 'Pre-shift — porridge with banana, slow-release energy', status: 'done' },
-    { label: 'Meal 2', time: '11:00', suggestion: 'Mid-shift — sandwich, fruit, low sugar', status: 'upcoming' },
-    { label: 'Meal 3', time: '16:00', suggestion: 'Post-shift — full meal, good protein, veg', status: 'later' },
+    { label: 'Meal 1', time: '05:30', suggestion: 'Pre-shift: porridge with banana, slow-release energy', status: 'done' },
+    { label: 'Meal 2', time: '11:00', suggestion: 'Mid-shift: sandwich, fruit, low sugar', status: 'upcoming' },
+    { label: 'Meal 3', time: '16:00', suggestion: 'Post-shift: full meal, good protein, veg', status: 'later' },
   ],
   dayoff: [
-    { label: 'Meal 1', time: 'When hungry', suggestion: 'No rules today — eat when your body asks', status: 'upcoming' },
-    { label: 'Meal 2', time: 'Afternoon', suggestion: 'Something nourishing — slow cooked, real food', status: 'later' },
+    { label: 'Meal 1', time: 'When hungry', suggestion: 'No rules today. Eat when your body asks', status: 'upcoming' },
+    { label: 'Meal 2', time: 'Afternoon', suggestion: 'Something nourishing: slow cooked, real food', status: 'later' },
     { label: 'Meal 3', time: 'Evening', suggestion: 'Light dinner if you\'re sleeping early tonight', status: 'later' },
   ],
 }
 
 const COMPANION_RESPONSES = [
-  "That's completely normal on Night 3 — your cortisol is at its lowest right now. Your body isn't broken, it's just doing exactly what nights do to it. What's keeping you up?",
-  "The 3am wall is real. Most shift workers hit it hard between 3 and 5am. Try getting up and moving for 5 minutes if you can — even just to the kitchen and back.",
+  "That's completely normal on Night 3. Your cortisol is at its lowest right now. Your body isn't broken, it's just doing exactly what nights do to it. What's keeping you up?",
+  "The 3am wall is real. Most shift workers hit it hard between 3 and 5am. Try getting up and moving for 5 minutes if you can, even just to the kitchen and back.",
   "You're not the only one awake right now. There are thousands of shift workers doing exactly what you're doing. The world just doesn't see it.",
   "If sleep isn't coming, stop fighting it. Get your phone off the bed, lie still, and just rest. Your body is recovering even if your brain doesn't feel like it.",
 ]
@@ -209,7 +209,7 @@ export default function ShiftWellDemo() {
               {/* Hydration */}
               <div style={{ background: '#1a2235', borderRadius: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', marginBottom: 10 }}>
-                  💧 Hydration — {hydration}/8 glasses
+                  💧 Hydration: {hydration}/8 glasses
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {Array.from({ length: 8 }).map((_, i) => (
@@ -273,7 +273,7 @@ export default function ShiftWellDemo() {
                     >+</button>
                   </div>
                   <div style={{ fontSize: 11, color: '#6b7280', textAlign: 'center', marginBottom: 12 }}>
-                    Fragmented? That's fine — log your total
+                    Fragmented? That's fine. Log your total
                   </div>
                   <button
                     onClick={() => setLoggedSleep(true)}
@@ -292,7 +292,7 @@ export default function ShiftWellDemo() {
                   border: '1px solid rgba(45,212,191,0.2)', textAlign: 'center',
                 }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>✓</div>
-                  <div style={{ fontSize: 13, color: '#2dd4bf', fontWeight: 600 }}>Sleep logged — {sleepHours} hours</div>
+                  <div style={{ fontSize: 13, color: '#2dd4bf', fontWeight: 600 }}>Sleep logged: {sleepHours} hours</div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
                     {sleepHours < 5 ? 'Short session. Rest when you can today.' : sleepHours >= 7 ? 'Solid sleep. Well done.' : "Not bad. Your body's adapting."}
                   </div>
@@ -387,7 +387,7 @@ export default function ShiftWellDemo() {
                 >→</button>
               </div>
               <div style={{ fontSize: 11, color: '#4b5563', textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
-                Demo uses pre-written responses · The real companion knows your shift pattern, your rotation, and your life context — every response is personal to you
+                Demo uses pre-written responses · The real companion knows your shift pattern, your rotation, and your life context. Every response is personal to you
               </div>
             </div>
           )}

@@ -16,7 +16,7 @@ export default function Privacy() {
         <li>Sleep logs and hydration data</li>
         <li>Food timing entries</li>
         <li>Life context you provide (e.g. children, school runs)</li>
-        <li>Payment information (processed securely by Stripe — we never store card details)</li>
+        <li>Payment information (processed securely by Stripe. We never store card details)</li>
         <li>Usage data via Google Analytics (anonymised)</li>
       </ul>
 
@@ -34,11 +34,11 @@ export default function Privacy() {
       <h2 style={{ color: '#f59e0b' }}>Who we share it with</h2>
       <p>We use the following third-party services to operate ShiftWell:</p>
       <ul>
-        <li><strong>Supabase</strong> — secure database storage</li>
-        <li><strong>Stripe</strong> — payment processing</li>
-        <li><strong>Anthropic</strong> — AI-powered guidance and companion chat</li>
-        <li><strong>Vercel</strong> — app hosting</li>
-        <li><strong>Google Analytics</strong> — anonymised usage analytics</li>
+        <li><strong>Supabase</strong>: secure database storage</li>
+        <li><strong>Stripe</strong>: payment processing</li>
+        <li><strong>Anthropic</strong>: AI-powered guidance and companion chat</li>
+        <li><strong>Vercel</strong>: app hosting</li>
+        <li><strong>Google Analytics</strong>: anonymised usage analytics</li>
       </ul>
       <p>We never sell your data. Ever.</p>
 

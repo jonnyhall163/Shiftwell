@@ -502,7 +502,7 @@ export default function Onboarding() {
               onClick={confirmPosition}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
-              Next — See your rota →
+              Next: See your rota →
             </button>
           </div>
         )}
@@ -566,7 +566,7 @@ export default function Onboarding() {
                 patternType: 'variable' as const,
                 icon: '🗓️',
                 title: 'Variable schedule',
-                desc: 'Your shifts change week to week — input them as they drop',
+                desc: 'Your shifts change week to week. Add them as they drop',
                 popular: false,
               },
             ].map(option => (
@@ -774,7 +774,7 @@ export default function Onboarding() {
               onClick={() => advanceTo('life')}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
-              Next — A bit about your life →
+              Next: A bit about your life →
             </button>
           </div>
         )}
@@ -784,7 +784,7 @@ export default function Onboarding() {
           <div className="space-y-6">
             <div>
               <h2 className="text-white font-semibold text-lg">Your shift types</h2>
-              <p className="text-gray-400 text-sm mt-1">Check the times look right — edit if needed</p>
+              <p className="text-gray-400 text-sm mt-1">Check the times look right, and edit if needed</p>
             </div>
             {shiftTypesEditor}
 
@@ -820,7 +820,7 @@ export default function Onboarding() {
               onClick={() => advanceTo('rotation')}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
-              Next — Map your rotation →
+              Next: Map your rotation →
             </button>
           </div>
         )}
@@ -873,7 +873,7 @@ export default function Onboarding() {
               onClick={() => advanceTo('life')}
               className="w-full bg-teal-500 hover:bg-teal-400 text-gray-950 font-semibold py-3 rounded-xl transition"
             >
-              Next — A bit about your life →
+              Next: A bit about your life →
             </button>
           </div>
         )}
@@ -884,7 +884,7 @@ export default function Onboarding() {
             <div>
               <h2 className="text-white font-semibold text-lg">A bit about your life</h2>
               <p className="text-gray-400 text-sm mt-1">
-                Helps ShiftWell give advice that fits your real life — not just your rota.
+                Helps ShiftWell give advice that fits your real life, not just your rota.
               </p>
             </div>
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-4">
@@ -935,7 +935,7 @@ export default function Onboarding() {
             </div>
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
               <label className="block text-sm text-gray-400 mb-1">Dietary requirements</label>
-              <p className="text-gray-600 text-xs mb-3">Select all that apply — affects food suggestions</p>
+              <p className="text-gray-600 text-xs mb-3">Select all that apply. This affects food suggestions</p>
               <div className="flex flex-wrap gap-2">
                 {[
                   'Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free',

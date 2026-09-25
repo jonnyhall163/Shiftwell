@@ -69,7 +69,7 @@ export default function Subscribe() {
             Keep thriving on shift
           </h1>
           <p className="text-gray-400 text-base leading-relaxed">
-            Your AI briefing, sleep tracker, hydration, routines and 3am companion —
+            Your AI briefing, sleep tracker, hydration, routines and 3am companion,
             built around your actual shift pattern.
           </p>
         </div>
@@ -155,8 +155,8 @@ export default function Subscribe() {
               '🌙 Sleep tracker built for fragmented sleep',
               '💧 Hydration tracker with shift-aware reminders',
               '⚡ Shift-aware workout routines with timers',
-              '🍽️ Meal timing guide — no breakfast/lunch/dinner',
-              '💬 3am companion — always awake when you are',
+              '🍽️ Meal timing guide: no breakfast/lunch/dinner',
+              '💬 3am companion, always awake when you are',
             ].map((feature, i) => (
               <div key={i} className="flex items-center gap-3">
                 <span className="text-sm text-gray-300">{feature}</span>
