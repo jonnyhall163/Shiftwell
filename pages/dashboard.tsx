@@ -10,6 +10,7 @@ import { trackTrialStarted, trackFirstBriefingSeen, trackFirstLog, trackCompanio
 import { clientTimePayload } from '../lib/clientTime'
 import { hasCompAccess } from '../lib/access'
 import { isWelcomePending, dismissWelcome } from '../lib/welcome'
+import { isIPhoneUserAgent } from '../lib/device'
 
 const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
@@ -305,7 +306,7 @@ function IosWaitlistCard({ user }: { user: User }) {
 
   useEffect(() => {
     try {
-      const isIPhone = /iPhone|iPod/i.test(navigator.userAgent)
+      const isIPhone = isIPhoneUserAgent(navigator.userAgent)
       setVisible(isIPhone && localStorage.getItem(storageKey) !== '1')
     } catch {
       setVisible(false)

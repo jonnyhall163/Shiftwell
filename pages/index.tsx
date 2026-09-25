@@ -4,7 +4,8 @@ import Link from 'next/link'
 import ShiftWellDemo from '../components/ShiftWellDemo'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { captureReferralCodeFromUrl } from '../lib/referral'
-import { trackCtaClick, trackIosWaitlistJoined } from '../lib/analytics'
+import { trackCtaClick, trackIosWaitlistJoined, trackIosWaitlistLinkClicked } from '../lib/analytics'
+import { isIPhoneUserAgent } from '../lib/device'
 import { DEFAULT_TITLE, DEFAULT_DESCRIPTION, absoluteUrl } from '../lib/seo'
 
 const jakarta = Plus_Jakarta_Sans({
@@ -213,6 +214,7 @@ export default function Landing() {
               fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 16, textDecoration: 'none',
             }}>Start your free 14-day trial →</Link>
             <p style={{ fontSize: 12, color: '#6b7280' }}>Card required · £0 today · cancel anytime before your trial ends.</p>
+            <IosHeroLink />
           </div>
 
           <HeroTestimonial testimonial={HERO_TESTIMONIAL} />
@@ -513,6 +515,36 @@ export default function Landing() {
   )
 }
 
+// Low-key link under the hero CTA, for iPhone visitors only (same check as
+// the dashboard card). Scrolls to the launch-list section and focuses the
+// email field. Focus happens inside the tap itself: iOS only opens the
+// keyboard for focus() calls made during a user gesture.
+function IosHeroLink() {
+  const [show, setShow] = useState(false)
+  useEffect(() => { setShow(isIPhoneUserAgent(navigator.userAgent)) }, [])
+  if (!show) return null
+
+  const go = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    trackIosWaitlistLinkClicked()
+    const section = document.getElementById('iphone-waitlist')
+    if (!section) return
+    section.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const input = document.getElementById('iphone-waitlist-email') as HTMLInputElement | null
+    input?.focus({ preventScroll: true })
+  }
+
+  return (
+    <a
+      href="#iphone-waitlist"
+      onClick={go}
+      style={{ fontSize: 13, color: '#9ca3af', textDecoration: 'underline', textUnderlineOffset: 3, textDecorationColor: 'rgba(156,163,175,0.4)', marginTop: 4 }}
+    >
+      On iPhone? Get told when the app launches.
+    </a>
+  )
+}
+
 function IosWaitlistSection({ jakarta }: { jakarta: string }) {
   const [email, setEmail] = useState('')
   const [website, setWebsite] = useState('') // honeypot, hidden from people
@@ -550,9 +582,9 @@ function IosWaitlistSection({ jakarta }: { jakarta: string }) {
   }
 
   return (
-    <div className="fade-up-5" style={{
+    <div id="iphone-waitlist" className="fade-up-5" style={{
       marginBottom: 64, background: '#111827', border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 20, padding: '24px 20px', textAlign: 'center',
+      borderRadius: 20, padding: '24px 20px', textAlign: 'center', scrollMarginTop: 24,
     }}>
       <div style={{ fontSize: 22, marginBottom: 8 }}>📱</div>
       <h3 style={{ fontFamily: jakarta, fontWeight: 700, fontSize: 18, color: '#f3f4f6', margin: '0 0 6px' }}>
@@ -567,6 +599,7 @@ function IosWaitlistSection({ jakarta }: { jakarta: string }) {
       ) : (
         <form onSubmit={submit} noValidate style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 420, margin: '0 auto' }}>
           <input
+            id="iphone-waitlist-email"
             type="email"
             inputMode="email"
             autoComplete="email"

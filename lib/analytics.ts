@@ -96,6 +96,11 @@ export function trackIosWaitlistJoined(where: 'landing' | 'dashboard') {
   track('ios_waitlist_joined', { where })
 }
 
+/** Tapped the hero's "On iPhone?" link to the launch list. */
+export function trackIosWaitlistLinkClicked() {
+  track('ios_waitlist_link_clicked')
+}
+
 /** Onboarding saved successfully. */
 export function trackOnboardingCompleted(patternType: string | null) {
   track('onboarding_completed', { pattern_type: patternType || 'unknown' })
