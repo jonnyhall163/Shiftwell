@@ -76,11 +76,19 @@ export function trackTrialStarted() {
 
 // ── Activation ───────────────────────────────────────────
 
-export type OnboardingStep = 'type' | 'configure' | 'rotation' | 'variable' | 'life'
+// 'preset' is the first screen (pick a rota preset); 'position' is "where
+// are you in it today?"; 'review' is the pre-filled grid. 'type' is the
+// "Mine's different" chooser that leads to the hand-built editors.
+export type OnboardingStep = 'preset' | 'position' | 'review' | 'type' | 'configure' | 'rotation' | 'variable' | 'life'
 
 /** A step of the onboarding wizard was completed (user moved past it). */
 export function trackOnboardingStepCompleted(step: OnboardingStep) {
   track('onboarding_step_completed', { step })
+}
+
+/** A rota preset (or "Mine's different" = 'custom') was picked in onboarding. */
+export function trackRotaPresetChosen(preset: string) {
+  track('rota_preset_chosen', { preset })
 }
 
 /** Onboarding saved successfully. */

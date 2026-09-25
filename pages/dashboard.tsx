@@ -9,6 +9,7 @@ import { getFoodPlan, getNextMeal } from '../lib/foodEngine'
 import { trackTrialStarted, trackFirstBriefingSeen, trackFirstLog, trackCompanionMessageSent } from '../lib/analytics'
 import { clientTimePayload } from '../lib/clientTime'
 import { hasCompAccess } from '../lib/access'
+import { isWelcomePending, dismissWelcome } from '../lib/welcome'
 
 const tabs = [
   { id: 'today',     label: 'Today',     icon: '☀️' },
@@ -303,6 +304,9 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
   const [journalEntry, setJournalEntry] = useState<any>(null)
   const [journalRefresh, setJournalRefresh] = useState(0)
   const [streak, setStreak] = useState(profile?.streak_count || 0)
+  // One-time card after onboarding (read after mount: localStorage is client-only).
+  const [showWelcome, setShowWelcome] = useState(false)
+  useEffect(() => { setShowWelcome(isWelcomePending(user?.id)) }, [user?.id])
 
   const hour = new Date().getHours()
   const greeting =
@@ -468,6 +472,21 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
 
   return (
     <div className="space-y-5 max-w-lg mx-auto">
+      {showWelcome && (
+        <div className="flex items-center gap-3 bg-gray-900 border border-teal-700/40 rounded-xl px-4 py-3">
+          <p className="flex-1 text-sm text-gray-200">
+            {name !== 'there' ? `Welcome, ${name}.` : 'Welcome.'} Here's your first briefing. <span className="text-teal-400">↓</span>
+          </p>
+          <button
+            onClick={() => { dismissWelcome(user.id); setShowWelcome(false) }}
+            aria-label="Dismiss welcome"
+            className="text-gray-500 hover:text-gray-300 text-lg leading-none px-1"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Greeting row */}
       <div className="flex items-start justify-between gap-3">
         <div>
