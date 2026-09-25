@@ -6,7 +6,7 @@ import type { User } from '@supabase/supabase-js'
 import type { PatternData, TodayShift } from '../lib/shiftEngine'
 import { ROUTINES, CATEGORY_META, getRecommendedRoutine } from '../lib/routines'
 import { getFoodPlan, getNextMeal } from '../lib/foodEngine'
-import { trackTrialStarted, trackFirstBriefingSeen, trackFirstLog, trackCompanionMessageSent } from '../lib/analytics'
+import { trackTrialStarted, trackFirstBriefingSeen, trackFirstLog, trackCompanionMessageSent, trackIosWaitlistJoined } from '../lib/analytics'
 import { clientTimePayload } from '../lib/clientTime'
 import { hasCompAccess } from '../lib/access'
 import { isWelcomePending, dismissWelcome } from '../lib/welcome'
@@ -294,6 +294,95 @@ export default function Dashboard() {
 }
 
 // ── TODAY ────────────────────────────────────────────────
+// iPhone launch list: a small card for logged-in iPhone users. One tap adds
+// their account email (the server reads it from the session). Hidden for
+// good once they join or dismiss it, per device.
+function IosWaitlistCard({ user }: { user: User }) {
+  const [visible, setVisible] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const storageKey = `sw_ios_waitlist_hidden_${user.id}`
+
+  useEffect(() => {
+    try {
+      const isIPhone = /iPhone|iPod/i.test(navigator.userAgent)
+      setVisible(isIPhone && localStorage.getItem(storageKey) !== '1')
+    } catch {
+      setVisible(false)
+    }
+  }, [storageKey])
+
+  const hideForGood = () => {
+    try { localStorage.setItem(storageKey, '1') } catch {}
+  }
+
+  const join = async () => {
+    if (status !== 'idle') return
+    setStatus('sending')
+    setError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ entry_point: 'dashboard' }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong. Please try again.')
+        setStatus('idle')
+        return
+      }
+      trackIosWaitlistJoined('dashboard')
+      hideForGood()
+      setStatus('done')
+    } catch {
+      setError('Something went wrong. Please try again.')
+      setStatus('idle')
+    }
+  }
+
+  if (!visible) return null
+
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+      <div className="flex items-start gap-3">
+        <span className="text-xl leading-none mt-0.5">📱</span>
+        <div className="flex-1 min-w-0">
+          {status === 'done' ? (
+            <p role="status" className="text-sm text-teal-400 font-medium">
+              Done. We'll email {user.email || 'you'} the day it launches.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-white font-medium">The iPhone app is nearly here. Want a heads-up?</p>
+              <button
+                onClick={join}
+                disabled={status === 'sending'}
+                className="mt-3 bg-teal-500 hover:bg-teal-400 text-gray-950 text-sm font-semibold px-4 py-2 rounded-lg transition disabled:opacity-50"
+              >
+                {status === 'sending' ? 'Adding…' : 'Yes, tell me'}
+              </button>
+            </>
+          )}
+          {error && <p role="alert" className="text-xs text-red-400 mt-2">{error}</p>}
+          <p className="text-[11px] text-gray-500 mt-3">
+            We'll only email you about the iPhone launch.{' '}
+            <a href="/privacy#iphone-launch-list" className="text-gray-400 underline">Privacy</a>
+          </p>
+        </div>
+        <button
+          onClick={() => { hideForGood(); setVisible(false) }}
+          aria-label="Dismiss iPhone app card"
+          className="text-gray-500 hover:text-gray-300 text-lg leading-none px-1"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function TodayView({ user, profile, onNavigate }: { user: User, profile: any, onNavigate: (tab: string) => void }) {
   const [briefing, setBriefing] = useState<string>('')
   const [loadingBriefing, setLoadingBriefing] = useState(true)
@@ -538,6 +627,8 @@ function TodayView({ user, profile, onNavigate }: { user: User, profile: any, on
         subtext="Takes 10 seconds"
         onClick={() => onNavigate('sleep')}
       />
+
+      <IosWaitlistCard user={user} />
 
       {/* Compact stats row */}
       <div className="grid grid-cols-2 gap-3">

@@ -4,7 +4,7 @@ export default function Privacy() {
       <a href="/" style={{ color: '#2dd4bf', textDecoration: 'none', fontSize: 14 }}>← Back to ShiftWell</a>
 
       <h1 style={{ color: '#2dd4bf', marginTop: 24, marginBottom: 8 }}>Privacy Policy</h1>
-      <p style={{ color: '#94a3b8', marginBottom: 32 }}>Last updated: March 2026</p>
+      <p style={{ color: '#94a3b8', marginBottom: 32 }}>Last updated: September 2026</p>
 
       <h2 style={{ color: '#f59e0b' }}>Who we are</h2>
       <p>ShiftWell is operated by Growvia Digital Ltd. If you have any questions about this policy, contact us at <a href="mailto:hello@getshiftwell.com" style={{ color: '#2dd4bf' }}>hello@getshiftwell.com</a>.</p>
@@ -27,6 +27,9 @@ export default function Privacy() {
         <li>To improve the app based on how it's used</li>
         <li>To contact you about your account if needed</li>
       </ul>
+
+      <h2 id="iphone-launch-list" style={{ color: '#f59e0b' }}>iPhone launch list</h2>
+      <p>If you join our iPhone launch list, we store your email address only to tell you when the iPhone app launches, and you can ask to be removed at any time via our <a href="/contact" style={{ color: '#2dd4bf' }}>contact page</a>.</p>
 
       <h2 style={{ color: '#f59e0b' }}>Who we share it with</h2>
       <p>We use the following third-party services to operate ShiftWell:</p>

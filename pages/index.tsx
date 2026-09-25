@@ -4,7 +4,7 @@ import Link from 'next/link'
 import ShiftWellDemo from '../components/ShiftWellDemo'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { captureReferralCodeFromUrl } from '../lib/referral'
-import { trackCtaClick } from '../lib/analytics'
+import { trackCtaClick, trackIosWaitlistJoined } from '../lib/analytics'
 import { DEFAULT_TITLE, DEFAULT_DESCRIPTION, absoluteUrl } from '../lib/seo'
 
 const jakarta = Plus_Jakarta_Sans({
@@ -470,6 +470,9 @@ export default function Landing() {
             </p>
           </div>
 
+          {/* ── iPhone launch list ─────────────────────────────── */}
+          <IosWaitlistSection jakarta={jakarta.style.fontFamily} />
+
           {/* ── FINAL CTA ─────────────────────────────────────── */}
           <div className="fade-up-5" style={{ textAlign: 'center', padding: '0 0 80px' }}>
             <h2 style={{
@@ -507,6 +510,101 @@ export default function Landing() {
 
       </div>
     </>
+  )
+}
+
+function IosWaitlistSection({ jakarta }: { jakarta: string }) {
+  const [email, setEmail] = useState('')
+  const [website, setWebsite] = useState('') // honeypot, hidden from people
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle')
+  const [error, setError] = useState<string | null>(null)
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (status !== 'idle') return
+    const value = email.trim()
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value) || value.length > 254) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    setError(null)
+    setStatus('sending')
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entry_point: 'landing', email: value, website }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong. Please try again.')
+        setStatus('idle')
+        return
+      }
+      trackIosWaitlistJoined('landing')
+      setStatus('done')
+    } catch {
+      setError('Something went wrong. Please try again.')
+      setStatus('idle')
+    }
+  }
+
+  return (
+    <div className="fade-up-5" style={{
+      marginBottom: 64, background: '#111827', border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 20, padding: '24px 20px', textAlign: 'center',
+    }}>
+      <div style={{ fontSize: 22, marginBottom: 8 }}>📱</div>
+      <h3 style={{ fontFamily: jakarta, fontWeight: 700, fontSize: 18, color: '#f3f4f6', margin: '0 0 6px' }}>
+        ShiftWell for iPhone is coming.
+      </h3>
+      <p style={{ fontSize: 14, color: '#9ca3af', margin: '0 0 18px' }}>Get told the day it launches.</p>
+
+      {status === 'done' ? (
+        <p role="status" style={{ fontSize: 14, color: '#2dd4bf', fontWeight: 600, margin: 0 }}>
+          You're on the list. We'll email you the day it launches.
+        </p>
+      ) : (
+        <form onSubmit={submit} noValidate style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 420, margin: '0 auto' }}>
+          <input
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            aria-label="Email address"
+            placeholder="you@email.com"
+            value={email}
+            onChange={e => { setEmail(e.target.value); if (error) setError(null) }}
+            disabled={status === 'sending'}
+            style={{
+              flex: '1 1 200px', minWidth: 0, background: '#0b1220', color: '#f3f4f6',
+              border: `1px solid ${error ? '#f87171' : 'rgba(255,255,255,0.15)'}`, borderRadius: 12,
+              padding: '12px 14px', fontSize: 15, outline: 'none',
+            }}
+          />
+          <input
+            type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" name="website"
+            value={website} onChange={e => setWebsite(e.target.value)}
+            style={{ position: 'absolute', left: -9999, width: 1, height: 1, opacity: 0 }}
+          />
+          <button
+            type="submit"
+            disabled={status === 'sending'}
+            style={{
+              flex: '0 0 auto', background: '#2dd4bf', color: '#090c14', border: 'none', borderRadius: 12,
+              padding: '12px 20px', fontFamily: jakarta, fontWeight: 700, fontSize: 15,
+              cursor: status === 'sending' ? 'default' : 'pointer', opacity: status === 'sending' ? 0.6 : 1,
+            }}
+          >
+            {status === 'sending' ? 'Adding…' : 'Tell me'}
+          </button>
+        </form>
+      )}
+      {error && <p role="alert" style={{ fontSize: 13, color: '#f87171', margin: '10px 0 0' }}>{error}</p>}
+      <p style={{ fontSize: 12, color: '#6b7280', margin: '14px 0 0' }}>
+        We'll only email you about the iPhone launch.{' '}
+        <a href="/privacy#iphone-launch-list" style={{ color: '#9ca3af' }}>Privacy</a>
+      </p>
+    </div>
   )
 }
 
