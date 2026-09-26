@@ -6,6 +6,7 @@ import { getTodayShift, toLocalDateStr } from '../lib/shiftEngine'
 import { trackOnboardingStepCompleted, trackOnboardingCompleted, trackRotaPresetChosen } from '../lib/analytics'
 import { ROTA_PRESETS, rotationBlocks, startDateForToday, type RotaPresetId } from '../lib/rotaPresets'
 import { markWelcomePending } from '../lib/welcome'
+import { mergeWithStoredPatternData } from '../lib/patternData'
 
 // preset -> position -> review -> life is the quick path. "Mine's
 // different" leads to 'type' and the original hand-built editors.
@@ -235,11 +236,21 @@ export default function Onboarding() {
       }
     }
 
+    // Merge into what's stored now, so an account that already has one (set up
+    // in the iOS app) keeps its extra fields. A brand-new account has nothing
+    // stored, so this is simply the fresh pattern.
+    const merged = await mergeWithStoredPatternData(supabase, user.id, patternData)
+    if (merged.error !== null) {
+      alert('Something went wrong. Please try again.')
+      setSaving(false)
+      return
+    }
+
     const { error } = await supabase
       .from('shiftwell_profiles')
       .update({
         pattern_type: patternType,
-        pattern_data: patternData,
+        pattern_data: merged.data,
         onboarding_complete: true,
         has_kids: hasKids,
         school_run_time: hasKids ? schoolRunTime : null,

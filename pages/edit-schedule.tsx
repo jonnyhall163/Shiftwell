@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import type { ShiftDefinition, FixedPatternData, NightsPatternData, VariablePatternData } from '../lib/shiftEngine'
+import { mergeWithStoredPatternData } from '../lib/patternData'
 
 const PRESET_SHIFTS: ShiftDefinition[] = [
   { label: 'Early', startTime: '06:00', endTime: '14:00', isOff: false },
@@ -225,10 +226,19 @@ export default function EditSchedule() {
       }
     }
 
+    // Merge into what's stored now, so fields the iOS app keeps in
+    // pattern_data (overrides, labels, break times...) survive this save.
+    const merged = await mergeWithStoredPatternData(supabase, user.id, patternData)
+    if (merged.error !== null) {
+      alert('Something went wrong. Please try again.')
+      setSaving(false)
+      return
+    }
+
     const { error } = await supabase
       .from('shiftwell_profiles')
       .update({
-        pattern_data: patternData,
+        pattern_data: merged.data,
         has_kids: hasKids,
         school_run_time: hasKids ? schoolRunTime : null,
         wake_constraint: wakeConstraint || null,
