@@ -4,7 +4,8 @@ import Link from 'next/link'
 import ShiftWellDemo from '../components/ShiftWellDemo'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { captureReferralCodeFromUrl } from '../lib/referral'
-import { trackCtaClick, trackIosWaitlistJoined, trackIosWaitlistLinkClicked } from '../lib/analytics'
+import IosWaitlistForm from '../components/IosWaitlistForm'
+import { trackCtaClick, trackIosWaitlistLinkClicked } from '../lib/analytics'
 import { isIPhoneUserAgent } from '../lib/device'
 import { DEFAULT_TITLE, DEFAULT_DESCRIPTION, absoluteUrl } from '../lib/seo'
 
@@ -516,71 +517,24 @@ export default function Landing() {
 }
 
 // Low-key link under the hero CTA, for iPhone visitors only (same check as
-// the dashboard card). Scrolls to the launch-list section and focuses the
-// email field. Focus happens inside the tap itself: iOS only opens the
-// keyboard for focus() calls made during a user gesture.
+// the dashboard card). Goes to the dedicated /iphone launch page.
 function IosHeroLink() {
   const [show, setShow] = useState(false)
   useEffect(() => { setShow(isIPhoneUserAgent(navigator.userAgent)) }, [])
   if (!show) return null
 
-  const go = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
-    trackIosWaitlistLinkClicked()
-    const section = document.getElementById('iphone-waitlist')
-    if (!section) return
-    section.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    const input = document.getElementById('iphone-waitlist-email') as HTMLInputElement | null
-    input?.focus({ preventScroll: true })
-  }
-
   return (
-    <a
-      href="#iphone-waitlist"
-      onClick={go}
+    <Link
+      href="/iphone"
+      onClick={() => trackIosWaitlistLinkClicked()}
       style={{ fontSize: 13, color: '#9ca3af', textDecoration: 'underline', textUnderlineOffset: 3, textDecorationColor: 'rgba(156,163,175,0.4)', marginTop: 4 }}
     >
       On iPhone? Get told when the app launches.
-    </a>
+    </Link>
   )
 }
 
 function IosWaitlistSection({ jakarta }: { jakarta: string }) {
-  const [email, setEmail] = useState('')
-  const [website, setWebsite] = useState('') // honeypot, hidden from people
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle')
-  const [error, setError] = useState<string | null>(null)
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (status !== 'idle') return
-    const value = email.trim()
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value) || value.length > 254) {
-      setError('Please enter a valid email address.')
-      return
-    }
-    setError(null)
-    setStatus('sending')
-    try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entry_point: 'landing', email: value, website }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        setError(data.error || 'Something went wrong. Please try again.')
-        setStatus('idle')
-        return
-      }
-      trackIosWaitlistJoined('landing')
-      setStatus('done')
-    } catch {
-      setError('Something went wrong. Please try again.')
-      setStatus('idle')
-    }
-  }
-
   return (
     <div id="iphone-waitlist" className="fade-up-5" style={{
       marginBottom: 64, background: '#111827', border: '1px solid rgba(255,255,255,0.08)',
@@ -591,52 +545,7 @@ function IosWaitlistSection({ jakarta }: { jakarta: string }) {
         ShiftWell for iPhone is coming.
       </h3>
       <p style={{ fontSize: 14, color: '#9ca3af', margin: '0 0 18px' }}>Get told the day it launches.</p>
-
-      {status === 'done' ? (
-        <p role="status" style={{ fontSize: 14, color: '#2dd4bf', fontWeight: 600, margin: 0 }}>
-          You're on the list. We'll email you the day it launches.
-        </p>
-      ) : (
-        <form onSubmit={submit} noValidate style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 420, margin: '0 auto' }}>
-          <input
-            id="iphone-waitlist-email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            aria-label="Email address"
-            placeholder="you@email.com"
-            value={email}
-            onChange={e => { setEmail(e.target.value); if (error) setError(null) }}
-            disabled={status === 'sending'}
-            style={{
-              flex: '1 1 200px', minWidth: 0, background: '#0b1220', color: '#f3f4f6',
-              border: `1px solid ${error ? '#f87171' : 'rgba(255,255,255,0.15)'}`, borderRadius: 12,
-              padding: '12px 14px', fontSize: 15, outline: 'none',
-            }}
-          />
-          <input
-            type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" name="website"
-            value={website} onChange={e => setWebsite(e.target.value)}
-            style={{ position: 'absolute', left: -9999, width: 1, height: 1, opacity: 0 }}
-          />
-          <button
-            type="submit"
-            disabled={status === 'sending'}
-            style={{
-              flex: '0 0 auto', background: '#2dd4bf', color: '#090c14', border: 'none', borderRadius: 12,
-              padding: '12px 20px', fontFamily: jakarta, fontWeight: 700, fontSize: 15,
-              cursor: status === 'sending' ? 'default' : 'pointer', opacity: status === 'sending' ? 0.6 : 1,
-            }}
-          >
-            {status === 'sending' ? 'Adding…' : 'Tell me'}
-          </button>
-        </form>
-      )}
-      {error && <p role="alert" style={{ fontSize: 13, color: '#f87171', margin: '10px 0 0' }}>{error}</p>}
-      <p style={{ fontSize: 12, color: '#6b7280', margin: '14px 0 0' }}>
-        We'll only email you about the iPhone launch.{' '}
-        <a href="/privacy#iphone-launch-list" style={{ color: '#9ca3af' }}>Privacy</a>
-      </p>
+      <IosWaitlistForm where="landing" inputId="iphone-waitlist-email" buttonLabel="Tell me" fontFamily={jakarta} />
     </div>
   )
 }

@@ -91,12 +91,14 @@ export function trackRotaPresetChosen(preset: string) {
   track('rota_preset_chosen', { preset })
 }
 
+export type IosWaitlistWhere = 'landing' | 'dashboard' | 'iphone_page'
+
 /** Joined the iPhone launch list. */
-export function trackIosWaitlistJoined(where: 'landing' | 'dashboard') {
+export function trackIosWaitlistJoined(where: IosWaitlistWhere) {
   track('ios_waitlist_joined', { where })
 }
 
-/** Tapped the hero's "On iPhone?" link to the launch list. */
+/** Tapped the hero's "On iPhone?" link (goes to /iphone). */
 export function trackIosWaitlistLinkClicked() {
   track('ios_waitlist_link_clicked')
 }
