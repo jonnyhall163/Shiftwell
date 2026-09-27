@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { TRIAL_DAYS, newSignupTrialEnd } from '../../../lib/trial'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -32,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data: profile } = await supabaseAuth
     .from('shiftwell_profiles')
-    .select('stripe_customer_id, full_name')
+    .select('stripe_customer_id, full_name, created_at, trial_ends_at, subscription_status, subscription_id, comp_access')
     .eq('id', user.id)
     .single()
 
@@ -79,13 +80,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  // New signups: bring the stored trial end in to signup + 7 days, so
+  // leaving checkout without subscribing doesn't keep the database default
+  // of 14 days of access. Stripe's own trial_end replaces it via the webhook
+  // if they do subscribe. See lib/trial.ts.
+  const trialEnd = newSignupTrialEnd(profile)
+  if (trialEnd) {
+    const { error: trialError } = await supabaseAdmin
+      .from('shiftwell_profiles')
+      .update({ trial_ends_at: trialEnd })
+      .eq('id', user.id)
+      .eq('subscription_status', 'trialing')
+      .is('subscription_id', null)
+      .eq('comp_access', false)
+      .gt('trial_ends_at', trialEnd)
+    // Not worth blocking checkout over: if they subscribe, the webhook
+    // writes Stripe's trial end anyway.
+    if (trialError) console.error('Checkout: failed to set trial_ends_at:', trialError)
+  }
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: 14,
+      trial_period_days: TRIAL_DAYS,
     },
     success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?subscribed=true`,
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/subscribe`,

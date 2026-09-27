@@ -4,7 +4,7 @@ export default function Terms() {
       <a href="/" style={{ color: '#2dd4bf', textDecoration: 'none', fontSize: 14 }}>← Back to ShiftWell</a>
 
       <h1 style={{ color: '#2dd4bf', marginTop: 24, marginBottom: 8 }}>Terms & Conditions</h1>
-      <p style={{ color: '#94a3b8', marginBottom: 32 }}>Last updated: March 2026</p>
+      <p style={{ color: '#94a3b8', marginBottom: 32 }}>Last updated: September 2026</p>
 
       <h2 style={{ color: '#f59e0b' }}>Who we are</h2>
       <p>ShiftWell is operated by Growvia Digital Ltd. By using ShiftWell you agree to these terms. If you disagree, please do not use the app.</p>
@@ -23,7 +23,7 @@ export default function Terms() {
       <h2 style={{ color: '#f59e0b' }}>Subscription and billing</h2>
       <ul>
         <li>ShiftWell is available on a monthly (£7.99/month) or annual (£59.99/year) subscription</li>
-        <li>A 14-day free trial is included. You will not be charged until the trial ends</li>
+        <li>New subscriptions include a 7-day free trial. You will not be charged until the trial ends</li>
         <li>You can cancel at any time via the Customer Portal. Cancellation takes effect at the end of your billing period</li>
         <li>Payments are processed securely by Stripe</li>
         <li>We do not offer refunds for partial billing periods</li>

@@ -8,7 +8,7 @@ import { ROUTINES, CATEGORY_META, getRecommendedRoutine } from '../lib/routines'
 import { getFoodPlan, getNextMeal } from '../lib/foodEngine'
 import { trackTrialStarted, trackFirstBriefingSeen, trackFirstLog, trackCompanionMessageSent, trackIosWaitlistJoined } from '../lib/analytics'
 import { clientTimePayload } from '../lib/clientTime'
-import { hasCompAccess } from '../lib/access'
+import { hasCompAccess, subscriptionLabel } from '../lib/access'
 import { isWelcomePending, dismissWelcome } from '../lib/welcome'
 import { isIPhoneUserAgent } from '../lib/device'
 
@@ -157,11 +157,7 @@ export default function Dashboard() {
                 {
                   label: 'Subscription',
                   icon: '💳',
-                  sub: hasCompAccess(profile) ? 'Free access' :
-                       profile?.subscription_status === 'active' ? 'Active' :
-                       profile?.subscription_status === 'trialing' ? '14-day trial' :
-                       profile?.subscription_status === 'past_due' ? 'Payment failed' :
-                       profile?.subscription_status === 'canceled' ? 'Canceled' : 'Manage',
+                  sub: subscriptionLabel(profile),
                   onClick: async () => {
                     setShowProfileMenu(false)
                     const { data: { session } } = await supabase.auth.getSession()
@@ -2526,7 +2522,7 @@ function SettingsView({ user, profile, onSignOut }: { user: User, profile: any, 
           },
           {
             label: 'Subscription',
-            sub: '14-day trial active',
+            sub: subscriptionLabel(profile),
             icon: '💳',
             onClick: () => {}
           },

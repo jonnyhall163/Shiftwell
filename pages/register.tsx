@@ -146,7 +146,7 @@ export default function Register() {
             <span className="text-white font-bold text-lg">ShiftWell</span>
           </div>
           <h1 className="text-2xl font-bold text-white">Start your free trial</h1>
-          <p className="text-gray-400 text-sm mt-2">14 days free. Cancel within that time and pay nothing.</p>
+          <p className="text-gray-400 text-sm mt-2">7 days free. Cancel within that time and pay nothing.</p>
         </div>
 
         <form onSubmit={handleRegister} className="bg-gray-900 rounded-2xl p-8 space-y-5">

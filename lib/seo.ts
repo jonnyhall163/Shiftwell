@@ -21,7 +21,7 @@ export const SITE_NAME = 'ShiftWell'
 export const DEFAULT_TITLE = 'ShiftWell: Built for Shift Workers'
 
 export const DEFAULT_DESCRIPTION =
-  'Sleep guidance, food timing and AI coaching that fits your actual shift pattern, not a 9-to-5. Free 14-day trial.'
+  'Sleep guidance, food timing and AI coaching that fits your actual shift pattern, not a 9-to-5. Free 7-day trial.'
 
 export const OG_IMAGE = `${SITE_URL}/og-image.png`
 export const OG_IMAGE_WIDTH = '1200'

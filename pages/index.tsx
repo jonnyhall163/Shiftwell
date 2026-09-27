@@ -213,7 +213,7 @@ export default function Landing() {
               display: 'inline-block', background: '#2dd4bf', color: '#090c14',
               borderRadius: 12, padding: '16px 40px',
               fontFamily: jakarta.style.fontFamily, fontWeight: 700, fontSize: 16, textDecoration: 'none',
-            }}>Start your free 14-day trial →</Link>
+            }}>Start your free 7-day trial →</Link>
             <p style={{ fontSize: 12, color: '#6b7280' }}>Card required · £0 today · cancel anytime before your trial ends.</p>
             <IosHeroLink />
           </div>
@@ -386,7 +386,7 @@ export default function Landing() {
 
           <div className="fade-up-5" style={{ marginBottom: 64 }}>
             <p style={{ textAlign: 'center', fontSize: 15, color: '#9ca3af', marginBottom: 32, fontWeight: 300 }}>
-              14-day free trial on either plan. Card required to start · £0 today · cancel anytime before your trial ends and you won't be charged a penny.
+              7-day free trial on either plan. Card required to start · £0 today · cancel anytime before your trial ends and you won't be charged a penny.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -460,11 +460,11 @@ export default function Landing() {
             </div>
 
             <p style={{ textAlign: 'center', fontSize: 13, color: '#9ca3af', marginTop: 20, lineHeight: 1.7 }}>
-              After 14 days, you'll be charged £7.99/mo (or £59.99/yr) unless you cancel.
+              After 7 days, you'll be charged £7.99/mo (or £59.99/yr) unless you cancel.
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 16, flexWrap: 'wrap' }}>
-              {['✓ 14-day free trial', '✓ Cancel anytime', '✓ No charge if you cancel in time'].map((item, i) => (
+              {['✓ 7-day free trial', '✓ Cancel anytime', '✓ No charge if you cancel in time'].map((item, i) => (
                 <span key={i} style={{ fontSize: 12, color: '#6b7280' }}>{item}</span>
               ))}
             </div>

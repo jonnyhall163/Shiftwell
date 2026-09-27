@@ -62,7 +62,7 @@ export default function Subscribe() {
         <div className="text-center mb-12 max-w-lg">
           {expired && (
             <div className="bg-amber-900/40 border border-amber-700/30 text-amber-300 text-sm rounded-xl px-4 py-3 mb-8">
-              Your 14-day trial has ended. Subscribe to keep going.
+              Your free trial has ended. Subscribe to keep going.
             </div>
           )}
           <h1 className="text-3xl font-bold text-white mb-3">
@@ -139,7 +139,7 @@ export default function Subscribe() {
                       : 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-700'
                   }`}
                 >
-                  {loading === card.planKey ? 'Loading...' : 'Start 14-day free trial →'}
+                  {loading === card.planKey ? 'Loading...' : 'Start 7-day free trial →'}
                 </button>
               </div>
             )
@@ -167,7 +167,7 @@ export default function Subscribe() {
 
         {/* Footer note */}
         <p className="text-gray-700 text-xs mt-10 text-center max-w-xs">
-          14-day free trial. Card required to start trial. Cancel anytime before trial ends and you won't be charged.
+          7-day free trial. Card required to start trial. Cancel anytime before trial ends and you won't be charged.
         </p>
 
       </div>
