@@ -19,6 +19,7 @@ export type CtaLocation =
   | 'pricing_annual'
   | 'pricing_monthly'
   | 'footer'
+  | 'iphone_page_android'
 
 function track(event: string, params?: Record<string, any>) {
   try {
@@ -96,6 +97,11 @@ export type IosWaitlistWhere = 'landing' | 'dashboard' | 'iphone_page'
 /** Joined the iPhone launch list. */
 export function trackIosWaitlistJoined(where: IosWaitlistWhere) {
   track('ios_waitlist_joined', { where })
+}
+
+/** Joined the Android app launch list. */
+export function trackAndroidWaitlistJoined(where: 'iphone_page') {
+  track('android_waitlist_joined', { where })
 }
 
 /** Tapped the hero's "On iPhone?" link (goes to /iphone). */

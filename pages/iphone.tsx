@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import Head from 'next/head'
 import Image, { type StaticImageData } from 'next/image'
 import { Plus_Jakarta_Sans } from 'next/font/google'
+import Link from 'next/link'
 import IosWaitlistForm from '../components/IosWaitlistForm'
+import { isAndroidUserAgent } from '../lib/device'
+import { trackCtaClick } from '../lib/analytics'
 import { SITE_NAME, absoluteUrl } from '../lib/seo'
 import todayImg from '../public/iphone/today.png'
 import sleepImg from '../public/iphone/sleep.png'
@@ -126,6 +129,7 @@ export default function IphonePage() {
             <p style={{ fontSize: 17, color: '#cbd5e1', lineHeight: 1.6, maxWidth: 460, margin: '0 auto 24px' }}>
               The app that knows your rota. Sleep, caffeine and meals planned around your earlies, lates and nights.
             </p>
+            <AndroidCard fontFamily={font} />
             <OfferBadge />
             <IosWaitlistForm where="iphone_page" inputId="iphone-email-top" buttonLabel="Join the list" fontFamily={font} joined={joined} onJoined={() => setJoined(true)} />
           </section>
@@ -160,6 +164,56 @@ export default function IphonePage() {
         </footer>
       </div>
     </>
+  )
+}
+
+// Android visitors only (user agent, checked after load like the landing
+// page's iPhone link): the web app works for them today, and they can join
+// the Android list. iPhone and desktop visitors never see this.
+function AndroidCard({ fontFamily }: { fontFamily: string }) {
+  const [show, setShow] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
+  useEffect(() => { setShow(isAndroidUserAgent(navigator.userAgent)) }, [])
+  if (!show) return null
+
+  return (
+    <div id="android-card" style={{
+      textAlign: 'left', background: '#111827', border: '1px solid rgba(45,212,191,0.3)',
+      borderRadius: 16, padding: '16px 16px 14px', margin: '0 auto 22px', maxWidth: 420,
+    }}>
+      <p style={{ fontSize: 14, color: '#e5e7eb', lineHeight: 1.6, margin: '0 0 14px' }}>
+        <strong style={{ color: '#f3f4f6' }}>On Android?</strong> You can use ShiftWell right now in your browser, and add it to your home screen like an app. A dedicated Android app is planned.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Link
+          href="/register"
+          onClick={() => trackCtaClick('iphone_page_android')}
+          style={{
+            display: 'block', textAlign: 'center', background: '#2dd4bf', color: '#090c14', borderRadius: 12,
+            padding: '12px 16px', fontFamily, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+          }}
+        >
+          Try it free
+        </Link>
+        {!formOpen && (
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            style={{
+              background: 'transparent', color: '#f3f4f6', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12,
+              padding: '12px 16px', fontFamily, fontWeight: 600, fontSize: 14, cursor: 'pointer',
+            }}
+          >
+            Tell me when the Android app launches
+          </button>
+        )}
+      </div>
+      {formOpen && (
+        <div style={{ textAlign: 'center', marginTop: 14 }}>
+          <IosWaitlistForm list="android" where="iphone_page" inputId="android-email" buttonLabel="Tell me" fontFamily={fontFamily} autoFocus />
+        </div>
+      )}
+    </div>
   )
 }
 

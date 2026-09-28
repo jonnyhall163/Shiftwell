@@ -28,9 +28,10 @@ export default function Privacy() {
         <li>To contact you about your account if needed</li>
       </ul>
 
-      <h2 id="iphone-launch-list" style={{ color: '#f59e0b' }}>iPhone launch list</h2>
+      <h2 id="iphone-launch-list" style={{ color: '#f59e0b' }}>iPhone and Android launch lists</h2>
       <p>If you join our iPhone launch list, we store your email address only to tell you when the iPhone app launches, and you can ask to be removed at any time via our <a href="/contact" style={{ color: '#2dd4bf' }}>contact page</a>.</p>
-      <p>Founding member offer: the first 100 people to join the list get 2 months free when the iPhone app launches. We also store the time you joined so we can tell who the first 100 are. If you're one of them, your offer comes in the launch email.</p>
+      <p>Founding member offer: the first 100 people to join the iPhone list get 2 months free when the iPhone app launches. We also store the time you joined so we can tell who the first 100 are. If you're one of them, your offer comes in the launch email.</p>
+      <p>If you join our Android app list, we store your email address only to tell you when the Android app launches, and you can ask to be removed at any time via our <a href="/contact" style={{ color: '#2dd4bf' }}>contact page</a>.</p>
 
       <h2 style={{ color: '#f59e0b' }}>Who we share it with</h2>
       <p>We use the following third-party services to operate ShiftWell:</p>

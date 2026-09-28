@@ -1,6 +1,14 @@
 // Launch-list helpers shared by /api/waitlist and its tests.
 
 export const WAITLIST_SOURCE = 'ios_waitlist'
+export const ANDROID_WAITLIST_SOURCE = 'android_waitlist'
+export type WaitlistList = 'ios' | 'android'
+
+/** The table's source value for a request's `list`. Only these two values
+ *  are ever written; anything else means the iPhone list. */
+export function waitlistSource(list: unknown): string {
+  return list === 'android' ? ANDROID_WAITLIST_SOURCE : WAITLIST_SOURCE
+}
 export type WaitlistEntryPoint = 'landing' | 'dashboard'
 
 // Same rule as the table's check constraint, so anything we accept the

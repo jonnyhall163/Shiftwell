@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { trackIosWaitlistJoined, type IosWaitlistWhere } from '../lib/analytics'
+import { trackIosWaitlistJoined, trackAndroidWaitlistJoined, type IosWaitlistWhere } from '../lib/analytics'
 
-// The iPhone launch-list form: email field, hidden honeypot, submit button,
+// The launch-list form: email field, hidden honeypot, submit button,
 // success message and consent line. Used on the landing page and on
 // /iphone. Both post entry_point 'landing' (the table only allows
 // 'landing' or 'dashboard'); GA's `where` tells the two pages apart.
+// list='android' joins the Android app list instead (/iphone's Android card).
 
 type Props = {
   where: Exclude<IosWaitlistWhere, 'dashboard'>
+  list?: 'ios' | 'android'
+  autoFocus?: boolean
   inputId: string
   buttonLabel: string
   fontFamily: string
@@ -16,7 +19,8 @@ type Props = {
   onJoined?: () => void
 }
 
-export default function IosWaitlistForm({ where, inputId, buttonLabel, fontFamily, joined, onJoined }: Props) {
+export default function IosWaitlistForm({ where, list = 'ios', inputId, buttonLabel, fontFamily, joined, onJoined, autoFocus }: Props) {
+  const android = list === 'android'
   const [email, setEmail] = useState('')
   const [website, setWebsite] = useState('') // honeypot, hidden from people
   const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle')
@@ -37,7 +41,9 @@ export default function IosWaitlistForm({ where, inputId, buttonLabel, fontFamil
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entry_point: 'landing', email: value, website }),
+        body: JSON.stringify(android
+          ? { entry_point: 'landing', list: 'android', email: value, website }
+          : { entry_point: 'landing', email: value, website }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -45,7 +51,8 @@ export default function IosWaitlistForm({ where, inputId, buttonLabel, fontFamil
         setStatus('idle')
         return
       }
-      trackIosWaitlistJoined(where)
+      if (android) trackAndroidWaitlistJoined('iphone_page')
+      else trackIosWaitlistJoined(where)
       setStatus('done')
       onJoined?.()
     } catch {
@@ -58,12 +65,15 @@ export default function IosWaitlistForm({ where, inputId, buttonLabel, fontFamil
     <>
       {done ? (
         <p role="status" style={{ fontSize: 14, color: '#2dd4bf', fontWeight: 600, margin: 0 }}>
-          You're on the list. We'll email you the day it launches.
+          {android
+            ? "You're on the list. We'll email you when the Android app launches."
+            : "You're on the list. We'll email you the day it launches."}
         </p>
       ) : (
         <form onSubmit={submit} noValidate style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 420, margin: '0 auto' }}>
           <input
             id={inputId}
+            autoFocus={autoFocus}
             type="email"
             inputMode="email"
             autoComplete="email"
@@ -98,7 +108,7 @@ export default function IosWaitlistForm({ where, inputId, buttonLabel, fontFamil
       )}
       {error && !done && <p role="alert" style={{ fontSize: 13, color: '#f87171', margin: '10px 0 0' }}>{error}</p>}
       <p style={{ fontSize: 12, color: '#6b7280', margin: '14px 0 0' }}>
-        We'll only email you about the iPhone launch.{' '}
+        {android ? "We'll only email you about the Android app launch." : "We'll only email you about the iPhone launch."}{' '}
         <a href="/privacy#iphone-launch-list" style={{ color: '#9ca3af' }}>Privacy</a>
       </p>
     </>

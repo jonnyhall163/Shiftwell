@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@supabase/supabase-js'
-import { normalizeEmail, isWaitlistRateLimited, WAITLIST_SOURCE } from '../../lib/waitlist'
+import { normalizeEmail, isWaitlistRateLimited, waitlistSource } from '../../lib/waitlist'
 
-// The iPhone launch list. Two ways in:
+// The launch lists: iPhone (default) and Android ({ list: 'android' }).
+// Two ways in:
 //   landing:   { entry_point: 'landing', email }  (no login)
 //   dashboard: { entry_point: 'dashboard' } + Authorization: the email comes
 //              from the logged-in account, never from the request body.
@@ -59,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { error } = await supabaseAdmin.from('shiftwell_waitlist').insert({
     email,
-    source: WAITLIST_SOURCE,
+    source: waitlistSource(body.list),
     entry_point: entryPoint,
     user_id: userId,
   })
