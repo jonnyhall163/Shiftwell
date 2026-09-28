@@ -20,6 +20,9 @@ const jakarta = Plus_Jakarta_Sans({
 const PAGE_TITLE = 'ShiftWell for iPhone'
 const PAGE_DESCRIPTION = 'The app that knows your rota. Join the launch list and get 2 months free.'
 const OFFER = 'Join the list now and get 2 months free when it launches. First 100 only.'
+// Share card (Facebook, X, WhatsApp). The page itself shows today.png.
+const SHARE_IMAGE = absoluteUrl('/iphone/share.png')
+const SHARE_ALT = 'ShiftWell for iPhone is almost here. The app that knows your rota, shown on the Today screen. Join the list, 2 months free.'
 
 type Slide = { name: string; img: StaticImageData; alt: string }
 
@@ -71,15 +74,15 @@ export default function IphonePage() {
         <meta property="og:url" content={absoluteUrl('/iphone')} key="og:url" />
         <meta property="og:title" content={PAGE_TITLE} key="og:title" />
         <meta property="og:description" content={PAGE_DESCRIPTION} key="og:description" />
-        <meta property="og:image" content={absoluteUrl('/iphone/today.png')} key="og:image" />
-        <meta property="og:image:width" content="1080" key="og:image:width" />
-        <meta property="og:image:height" content="1350" key="og:image:height" />
-        <meta property="og:image:alt" content={SLIDES[0].alt} key="og:image:alt" />
+        <meta property="og:image" content={SHARE_IMAGE} key="og:image" />
+        <meta property="og:image:width" content="1200" key="og:image:width" />
+        <meta property="og:image:height" content="630" key="og:image:height" />
+        <meta property="og:image:alt" content={SHARE_ALT} key="og:image:alt" />
         <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
         <meta name="twitter:title" content={PAGE_TITLE} key="twitter:title" />
         <meta name="twitter:description" content={PAGE_DESCRIPTION} key="twitter:description" />
-        <meta name="twitter:image" content={absoluteUrl('/iphone/today.png')} key="twitter:image" />
-        <meta name="twitter:image:alt" content={SLIDES[0].alt} key="twitter:image:alt" />
+        <meta name="twitter:image" content={SHARE_IMAGE} key="twitter:image" />
+        <meta name="twitter:image:alt" content={SHARE_ALT} key="twitter:image:alt" />
         <style>{`
           @keyframes twinkle {
             0%, 100% { opacity: var(--min-op, 0.1); }
