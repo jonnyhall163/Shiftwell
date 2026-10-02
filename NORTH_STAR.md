@@ -36,7 +36,7 @@ Get a new user from signup to "I'd miss this" in their first week. ShiftWell has
 ## Priority 1: Fix this week (live web app, `jonnyhall163/Shiftwell`)
 
 - [x] Turn on Stripe's trial reminder emails (Stripe dashboard setting, no code). *(24 Sept 2026: Jonny checked, already on)*
-- [ ] Fix the Stripe webhook: *(Rewrite merged 24 Sept 2026 without a sandbox test, a deliberate exception: no paying customers and one live trial. It passes the signed-event and mock tests. The 29 stale rows were corrected against Stripe on 24 Sept 2026, a direct database fix with no commit. Tick after the 1 Oct trial-end check.)*
+- [x] Fix the Stripe webhook: *(1 Oct 2026, 6c06272 + 7ac6f24. Rewrite merged 24 Sept 2026 without a sandbox test, a deliberate exception: no paying customers and one live trial. It passes the signed-event and mock tests. The 29 stale rows were corrected against Stripe on 24 Sept 2026, a direct database fix with no commit. 1 Oct trial-end check passed: the one live trial (cancelled by the user on 29 Sept, ended 1 Oct 08:54 UTC, never charged) matches Stripe on every field in the database. Supabase logs show the webhook's writes on 29 Sept and its lookup at trial end; the trial-end write itself isn't in the logs, and Vercel's runtime logs only keep 1 hour, so watch the next trial end too.)*
   - **Stripe sandbox test required before App Store launch or any paid ads.**
   - The £0 invoice at trial start marks users "active" and pays the referral reward early. Stop it.
   - Save Stripe's real trial end date.
