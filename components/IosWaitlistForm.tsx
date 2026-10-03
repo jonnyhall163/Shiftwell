@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { trackIosWaitlistJoined, trackAndroidWaitlistJoined, type IosWaitlistWhere } from '../lib/analytics'
+import { trackIosWaitlistJoined, trackAndroidWaitlistJoined, type IosWaitlistWhere, type AndroidWaitlistWhere } from '../lib/analytics'
 
 // The launch-list form: email field, hidden honeypot, submit button,
 // success message and consent line. Used on the landing page and on
 // /iphone. Both post entry_point 'landing' (the table only allows
 // 'landing' or 'dashboard'); GA's `where` tells the two pages apart.
-// list='android' joins the Android app list instead (/iphone's Android card).
+// list='android' joins the Android app list instead (the Android card on
+// /iphone and /android); where is then 'iphone_page' or 'android_page'.
 
 type Props = {
-  where: Exclude<IosWaitlistWhere, 'dashboard'>
+  where: Exclude<IosWaitlistWhere, 'dashboard'> | AndroidWaitlistWhere
   list?: 'ios' | 'android'
   autoFocus?: boolean
   inputId: string
@@ -51,8 +52,8 @@ export default function IosWaitlistForm({ where, list = 'ios', inputId, buttonLa
         setStatus('idle')
         return
       }
-      if (android) trackAndroidWaitlistJoined('iphone_page')
-      else trackIosWaitlistJoined(where)
+      if (android) trackAndroidWaitlistJoined(where === 'android_page' ? 'android_page' : 'iphone_page')
+      else if (where !== 'android_page') trackIosWaitlistJoined(where)
       setStatus('done')
       onJoined?.()
     } catch {

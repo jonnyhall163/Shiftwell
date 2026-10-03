@@ -20,6 +20,7 @@ export type CtaLocation =
   | 'pricing_monthly'
   | 'footer'
   | 'iphone_page_android'
+  | 'android_page'
 
 function track(event: string, params?: Record<string, any>) {
   try {
@@ -100,7 +101,9 @@ export function trackIosWaitlistJoined(where: IosWaitlistWhere) {
 }
 
 /** Joined the Android app launch list. */
-export function trackAndroidWaitlistJoined(where: 'iphone_page') {
+export type AndroidWaitlistWhere = 'iphone_page' | 'android_page'
+
+export function trackAndroidWaitlistJoined(where: AndroidWaitlistWhere) {
   track('android_waitlist_joined', { where })
 }
 
