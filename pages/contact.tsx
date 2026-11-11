@@ -71,7 +71,7 @@ export default function Contact() {
 
       <p style={{ marginTop: 48, color: '#64748b', fontSize: 14 }}>
         <a href="/privacy" style={{ color: '#64748b', marginRight: 16 }}>Privacy Policy</a>
-        <a href="/terms" style={{ color: '#64748b' }}>Terms & Conditions</a>
+        <a href="/terms" style={{ color: '#64748b' }}>Terms of Use</a>
       </p>
     </div>
   )

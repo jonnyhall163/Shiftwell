@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import Head from 'next/head'
+import Link from 'next/link'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 
 // Shared look for the launch-list pages (/iphone and /android): night-sky
@@ -75,6 +76,10 @@ export default function LaunchPageLayout({ children }: { children: ReactNode }) 
         <footer style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '24px 16px', textAlign: 'center' }}>
           <p style={{ fontSize: 12, color: '#9ca3af' }}>© 2026 ShiftWell. Made in Glasgow for shift workers.</p>
           <p style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>Growvia Digital Ltd</p>
+          <p style={{ fontSize: 12, marginTop: 10 }}>
+            <Link href="/privacy" style={{ color: '#64748b', marginRight: 16 }}>Privacy</Link>
+            <Link href="/terms" style={{ color: '#64748b' }}>Terms</Link>
+          </p>
         </footer>
       </div>
     </>

@@ -502,7 +502,7 @@ export default function Landing() {
         <footer style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '28px 24px', textAlign: 'center' }}>
           <div style={{ marginBottom: 12 }}>
             <a href="/privacy" style={{ color: '#64748b', marginRight: 24, fontSize: 14, textDecoration: 'none' }}>Privacy Policy</a>
-            <a href="/terms" style={{ color: '#64748b', marginRight: 24, fontSize: 14, textDecoration: 'none' }}>Terms & Conditions</a>
+            <a href="/terms" style={{ color: '#64748b', marginRight: 24, fontSize: 14, textDecoration: 'none' }}>Terms of Use</a>
             <a href="/contact" style={{ color: '#64748b', fontSize: 14, textDecoration: 'none' }}>Contact</a>
           </div>
           <p style={{ fontSize: 12, color: '#9ca3af' }}>
