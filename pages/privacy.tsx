@@ -217,7 +217,7 @@ export default function Privacy() {
         <li><strong>Backups:</strong> copies in our database provider&apos;s backups are overwritten on their normal cycle, within 30 days.</li>
         <li><strong>Rota photos:</strong> never stored.</li>
         <li><strong>Companion chats:</strong> on your phone until the end of the day; not stored on our servers.</li>
-        <li><strong>Launch lists:</strong> until we&apos;ve sent the launch email and any founding member offer, or until you ask to be removed.</li>
+        <li><strong>Launch lists:</strong> until you unsubscribe or ask us to delete your email.</li>
         <li><strong>Referral records:</strong> we keep a record that a referral reward was given, with your account ID removed, after you delete your account.</li>
         <li><strong>Payment records:</strong> Stripe and Apple keep payment records for as long as the law requires (in the UK, usually 6 years).</li>
         <li><strong>Website analytics:</strong> kept in Google Analytics for no more than 14 months.</li>
