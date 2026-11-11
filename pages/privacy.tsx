@@ -1,4 +1,5 @@
 import LegalLayout, { A, COMPANY, H2, H3, Mail } from '../components/LegalLayout'
+import { openCookieSettings } from '../components/CookieConsent'
 
 // Covers the website and the iPhone app. Every statement about the app was
 // checked against jonnyhall163/shiftwell-native (11 Nov 2026): the briefing,
@@ -95,13 +96,29 @@ export default function Privacy() {
 
       <H3>Website analytics</H3>
       <p>
-        The website uses Google Analytics to count visits and see which pages and buttons are used: pages viewed, the device and browser you use,
-        roughly where you are (from your IP address) and events such as starting a trial or joining a launch list. Google Analytics uses cookies.
+        If you tap Accept on our cookie banner, the website uses Google Analytics to count visits and see which pages and buttons are used: pages viewed, the device and browser you use,
+        roughly where you are (from your IP address) and events such as starting a trial or joining a launch list. See <A href="#cookies">Cookies</A>.
       </p>
       <p><strong>The iPhone app has no analytics or tracking service at all.</strong> Nothing about how you use the app is sent to an analytics company.</p>
 
       <H3>Technical logs</H3>
       <p>Our hosting and database providers keep short-lived technical logs (such as IP address, time and the page or function requested) to keep the service running and secure. We don&apos;t use them to track you.</p>
+
+      <H2 id="cookies">Cookies</H2>
+      <p>
+        The website only sets Google Analytics cookies if you tap Accept on the cookie banner. If you tap Reject, or don&apos;t choose, Google Analytics isn&apos;t loaded at all.
+        We remember your choice in your browser. The website also stores a few small settings in your browser that it needs to work, such as keeping you signed in
+        and remembering a referral code, and these are not used for tracking.
+      </p>
+      <p>
+        <button
+          type="button"
+          onClick={openCookieSettings}
+          style={{ background: 'transparent', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.5)', borderRadius: 10, padding: '8px 14px', fontSize: 15, cursor: 'pointer' }}
+        >
+          Cookie settings
+        </button>
+      </p>
 
       <H2 id="apple-health">Apple Health</H2>
       <p>The app only reads from Apple Health, and only after you give permission in Apple&apos;s Health permission screen. It never writes anything to Apple Health.</p>
@@ -184,7 +201,7 @@ export default function Privacy() {
           <tr><td>Stripe</td><td>Takes payments on the website. Stripe handles your card details under its own privacy policy.</td><td>Ireland and USA</td></tr>
           <tr><td>Resend</td><td>Sends account emails, such as password resets.</td><td>USA</td></tr>
           <tr><td>Vercel</td><td>Hosts the website and its server functions (including the website&apos;s requests to the AI and to Stripe).</td><td>USA</td></tr>
-          <tr><td>Google Analytics</td><td>Website visit statistics (website only).</td><td>USA</td></tr>
+          <tr><td>Google Analytics</td><td>Website visit statistics (website only, and only if you accept cookies).</td><td>USA</td></tr>
         </tbody>
       </table>
       <p>We may also share data if the law requires it, or to protect someone&apos;s safety. If ShiftWell is ever sold, your data would pass to the new owner under this policy, and we would tell you first.</p>
@@ -206,7 +223,8 @@ export default function Privacy() {
           <tr><td>Sending your details to the AI on the website</td><td>Contract: the briefing and Companion are part of the website service you sign up for.</td></tr>
           <tr><td>Rota photos</td><td>Consent, given each time you choose &quot;Use a photo&quot;.</td></tr>
           <tr><td>Launch lists</td><td>Consent, given when you join. You can withdraw it at any time.</td></tr>
-          <tr><td>Keeping ShiftWell secure, preventing misuse, and website statistics</td><td>Legitimate interests: running a safe, working service. You can object at any time.</td></tr>
+          <tr><td>Website statistics (Google Analytics)</td><td>Consent, given by tapping Accept on the cookie banner. You can change it at any time with Cookie settings.</td></tr>
+          <tr><td>Keeping ShiftWell secure and preventing misuse</td><td>Legitimate interests: running a safe, working service. You can object at any time.</td></tr>
           <tr><td>Payment and tax records</td><td>Legal obligation.</td></tr>
         </tbody>
       </table>

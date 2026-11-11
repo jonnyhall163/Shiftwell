@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import type { AppProps } from 'next/app'
 import '../styles/globals.css'
-import Script from 'next/script'
 import Head from 'next/head'
 import ErrorBoundary from '../components/ErrorBoundary'
+import CookieConsent from '../components/CookieConsent'
 import {
   SITE_URL, SITE_NAME, DEFAULT_TITLE, DEFAULT_DESCRIPTION,
   OG_IMAGE, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT, OG_IMAGE_ALT,
@@ -52,18 +52,8 @@ export default function MyApp({ Component, pageProps }: AppProps) {
         <meta name="twitter:image" content={OG_IMAGE} key="twitter:image" />
         <meta name="twitter:image:alt" content={OG_IMAGE_ALT} key="twitter:image:alt" />
       </Head>
-      <Script
-        src="https://www.googletagmanager.com/gtag/js?id=G-NP3BRQ4P5T"
-        strategy="afterInteractive"
-      />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-NP3BRQ4P5T');
-        `}
-      </Script>
+      {/* Google Analytics loads only after the visitor taps Accept. */}
+      <CookieConsent />
       <ErrorBoundary>
         <Component {...pageProps} />
       </ErrorBoundary>
